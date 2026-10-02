@@ -1,0 +1,44 @@
+@import 'tailwindcss';
+
+/* 1. Enable Tailwind v4 dark mode variant */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* 2. Define global theme mappings */
+@theme {
+  --color-primary: var(--theme-primary, #e31837);
+  --color-primary-hover: var(--theme-primary-hover, #c11530);
+}
+
+/* 3. Theme color definitions */
+:root,
+[data-theme='default'] {
+  --theme-primary: #e31837;
+  --theme-primary-hover: #c11530;
+}
+
+[data-theme='blue'] {
+  --theme-primary: #2563eb;
+  --theme-primary-hover: #1d4ed8;
+}
+
+[data-theme='emerald'] {
+  --theme-primary: #059669;
+  --theme-primary-hover: #047857;
+}
+
+/* 4. Global Dark Mode & Theme Smooth Transitions */
+body {
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
+}
+
+/* 
+  🌐 GLOBAL AUTOMATIC ADAPTABILITY:
+  Instead of writing `bg-white dark:bg-slate-900` on every single container, 
+  these rules automatically adapt standard elements.
+*/
+.dark body {
+  background-color: #0f172a; /* slate-900 */
+  color: #f8fafc; /* slate-50 */
+}
