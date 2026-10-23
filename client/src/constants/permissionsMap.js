@@ -1,6 +1,7 @@
 // client/src/constants/permissionsMap.js
 import { ROLES } from './roles'
 import { getPortalForPath } from '../components/layout/portalConfig'
+import { isSuperUserRole } from '../utils/roleRouting'
 
 // Keyed by the suffix after the portal prefix, so the same module check
 // applies under any portal: '/branches' covers /developer/branches,
@@ -15,73 +16,122 @@ export const ROUTE_MODULE_MAP = {
   '/deliveryStatus': { module: 'delivery_status', action: 'read' },
   '/vehicles': { module: 'vehicles', action: 'read' },
   '/vehicle-types': { module: 'vehicle_types', action: 'read' },
+  '/live-map': { module: 'live_map', action: 'read' },
 }
 
 /**
- * Normalizes raw backend permission data into a standard lookup dictionary:
- * { branches: { read: true, write: false }, ... }
+ * Normalizes raw backend permission data into a lookup dictionary:
+ * { branches: { read: true, write: false, update: false, delete: false }, ... }
+ *
+ * Accepts every shape the API might return:
+ *  - an array of rows            [{ module, read }, { mp_module, mp_can_read }, ...]
+ *  - { permissions: [ ...rows ] }
+ *  - an object keyed by module   { vehicles: { read: true } | { can_read: true } }
+ * Exported so the Sidebar and the route guard read the matrix identically.
  */
-function normalizePermissions(rawPermissions) {
+const pick = (obj, keys) => {
+  for (const k of keys) {
+    if (obj?.[k] !== undefined && obj?.[k] !== null) return obj[k]
+  }
+  return false
+}
+
+const toFlags = (p) => ({
+  read: Boolean(pick(p, ['read', 'can_read', 'is_read', 'mp_can_read'])),
+  write: Boolean(pick(p, ['write', 'can_write', 'is_write', 'mp_can_write'])),
+  update: Boolean(pick(p, ['update', 'can_update', 'is_update', 'mp_can_update'])),
+  delete: Boolean(pick(p, ['delete', 'can_delete', 'is_delete', 'mp_can_delete'])),
+})
+
+export function normalizePermissions(rawPermissions) {
   if (!rawPermissions) return {}
 
-  if (!Array.isArray(rawPermissions)) {
-    return rawPermissions
-  }
+  const rows = Array.isArray(rawPermissions)
+    ? rawPermissions
+    : Array.isArray(rawPermissions.permissions)
+      ? rawPermissions.permissions
+      : null
 
   const normalized = {}
-  rawPermissions.forEach((p) => {
-    const mod = p.module || p.module_name || p.name
-    if (mod) {
-      normalized[mod] = {
-        read: Boolean(p.read ?? p.can_read ?? p.is_read ?? false),
-        write: Boolean(p.write ?? p.can_write ?? p.is_write ?? false),
-        update: Boolean(p.update ?? p.can_update ?? p.is_update ?? false),
-        delete: Boolean(p.delete ?? p.can_delete ?? p.is_delete ?? false),
-      }
-    }
+
+  if (rows) {
+    rows.forEach((p) => {
+      const mod = p?.module || p?.module_name || p?.mp_module || p?.name
+      if (mod) normalized[mod] = toFlags(p)
+    })
+    return normalized
+  }
+
+  Object.entries(rawPermissions).forEach(([mod, p]) => {
+    if (p && typeof p === 'object') normalized[mod] = toFlags(p)
   })
   return normalized
 }
 
 /**
- * Evaluates whether user permissions grant access to a specific path.
- *
- * Order: super-role bypass -> is this role even allowed on this portal
- * (allowedRoles) -> is the specific module/action granted in the matrix.
- * Unknown paths outside any portal fail closed; unknown sub-routes inside
- * a portal the role is allowed on fall back to the portal-level gate.
+ * Looks up the module/action for a path suffix.
+ * Handles trailing slashes, query strings, and nested routes
+ * ('/vehicles/new', '/vehicles/123' -> '/vehicles').
  */
-// client/src/constants/permissionsMap.js — replace hasRoutePermission
-export function hasRoutePermission(userRole, rawPermissionsMatrix, path) {
-  const cleanRole = userRole ? String(userRole).trim().toLowerCase() : ''
+export function resolveRouteConfig(suffix) {
+  const clean = String(suffix || '')
+    .split(/[?#]/)[0]
+    .replace(/\/+$/, '')
+  if (!clean) return undefined
+  if (ROUTE_MODULE_MAP[clean]) return ROUTE_MODULE_MAP[clean]
+  const first = clean.split('/').filter(Boolean)[0]
+  return first ? ROUTE_MODULE_MAP['/' + first] : undefined
+}
 
-  // client/src/constants/permissionsMap.js — inside hasRoutePermission
-  const isSuperRole =
-    cleanRole === 'admin' ||
-    cleanRole === 'administrator' ||
-    cleanRole === 'super admin' ||
-    cleanRole === ROLES.ADMIN?.toLowerCase()
+/**
+ * Matrix check for one nav suffix. Used by the Sidebar (non-super users).
+ */
+export function canAccessSuffix(rawPermissionsMatrix, suffix) {
+  const cfg = resolveRouteConfig(suffix)
+  if (!cfg) return false
+  const matrix = normalizePermissions(rawPermissionsMatrix)
+  return Boolean(matrix?.[cfg.module]?.[cfg.action])
+}
 
-  if (isSuperRole) return true
+/**
+ * Evaluates whether a user may open a path.
+ *
+ * Order: super-role bypass -> known portal (else fail closed) ->
+ * mapped module screen (matrix is the sole gate) -> portal-level role gate
+ * for the portal root / unmapped pages.
+ *
+ * `userRoles` may be the full lowercase role array or a single role string.
+ * Using the whole array keeps this consistent with the Sidebar, which also
+ * treats a user as super if ANY of their roles is a super role.
+ */
+export function hasRoutePermission(userRoles, rawPermissionsMatrix, path) {
+  const roles = (Array.isArray(userRoles) ? userRoles : [userRoles])
+    .filter(Boolean)
+    .map((r) => String(r).trim().toLowerCase())
 
-  const portal = getPortalForPath(path)
+  if (isSuperUserRole(roles) || roles.includes(ROLES.ADMIN?.toLowerCase())) return true
+
+  const cleanPath = String(path || '')
+    .split(/[?#]/)[0]
+    .replace(/\/+$/, '')
+
+  const portal = getPortalForPath(cleanPath)
   if (!portal) return false // outside any known portal: fail closed
 
-  const suffix = path.slice(portal.path.length)
-  const routeConfig = ROUTE_MODULE_MAP[suffix]
+  const suffix = cleanPath.slice(portal.path.length)
+  const routeConfig = resolveRouteConfig(suffix)
 
-  // A mapped module screen: the matrix is the sole gate. A role doesn't
-  // need to be in the portal's allowedRoles to reach a screen it's been
-  // explicitly granted — that's the whole point of the shared /admin
-  // screens now serving every role.
+  // FIX: `matrix` and `allowedLower` were used here without being defined
+  // (allowedLower was declared further down, so it threw a ReferenceError).
+  const matrix = normalizePermissions(rawPermissionsMatrix)
+  const allowedLower = (portal.allowedRoles || []).map((r) => r.toLowerCase().trim())
+
+  // A mapped module screen: the matrix is the sole gate. A role doesn't need
+  // to be in the portal's allowedRoles to reach a screen it was granted.
   if (routeConfig) {
-    const matrix = normalizePermissions(rawPermissionsMatrix)
     return Boolean(matrix?.[routeConfig.module]?.[routeConfig.action])
   }
 
-  // Portal root, or a page with no matrix mapping yet: fall back to the
-  // portal-level role gate.
-  const allowedLower = (portal.allowedRoles || []).map((r) => r.toLowerCase().trim())
-  return allowedLower.includes(cleanRole)
+  // Portal root, or a page with no matrix mapping yet: portal-level gate.
+  return roles.some((r) => allowedLower.includes(r))
 }
-

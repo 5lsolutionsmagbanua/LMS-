@@ -2,11 +2,13 @@
 export default function EditLink({ onClick }) {
   return (
     <button
+      type="button"
       onClick={onClick}
-      /* 👉 Uses text-primary and hover opacity to dynamically adapt to the active theme color */
-      className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:opacity-80 transition-opacity"
+      // text-ink follows the theme primary on every theme except White,
+      // where it switches to a dark (light mode) or white (dark mode) ink.
+      className="inline-flex items-center gap-1.5 rounded-md text-sm font-semibold text-ink transition-opacity hover:opacity-80 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 cursor-pointer"
     >
-      <PencilIcon className="w-3.5 h-3.5" />
+      <PencilIcon className="h-3.5 w-3.5" />
       Edit
     </button>
   )

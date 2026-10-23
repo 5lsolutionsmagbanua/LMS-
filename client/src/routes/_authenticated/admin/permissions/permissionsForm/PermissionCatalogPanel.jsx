@@ -4,22 +4,26 @@ import { PERMISSION_MODULES } from '@/constants/permissionCatalog'
 
 /**
  * Read-only reference of every permission the system defines.
- *
- * Nothing here is editable — it's for looking up what a permission actually
- * controls, and for copying the permission code when you're writing a route
- * guard. The codes match the strings requirePermission() expects on the server.
  */
 export default function PermissionCatalogPanel() {
   return (
     <div className="space-y-6">
       {/* Intro Box with subtle theme accent */}
-      <div className="flex items-start gap-3 rounded-xl border border-slate-100 bg-slate-50/50 p-4">
-        <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+      <div className="flex items-start gap-3 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50/60 dark:bg-slate-900/40 p-4 backdrop-blur-sm shadow-2xs">
+        <div
+          style={{
+            backgroundColor: 'color-mix(in srgb, var(--theme-primary) 12%, transparent)',
+            color: 'var(--theme-primary)',
+          }}
+          className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl"
+        >
           <BookOpenIcon className="h-4 w-4" />
         </div>
         <div>
-          <p className="text-sm font-semibold text-slate-800">Permission Reference Catalog</p>
-          <p className="mt-0.5 max-w-2xl text-xs text-slate-500 leading-relaxed">
+          <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+            Permission Reference Catalog
+          </p>
+          <p className="mt-0.5 max-w-2xl text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
             Every permission in the system, grouped by the part of the app it controls. Copy a code
             to use it in a route guard. To give a role access, switch to Assign by role.
           </p>

@@ -1,20 +1,23 @@
+// client/src/routes/_authenticated/admin/vehicles/vehiclesForm/vehicleEditForm.jsx
 import { useState } from 'react'
 import Button from '@/components/ui/Button'
 import Alert from '@/components/ui/Alert'
 import { useUpsertVehicle } from '@/hooks/useMasterVehicles'
+import { useVehicleTypes } from '@/hooks/useVehicleTypes'
 import { Upload, X } from 'lucide-react'
 
 const REQUIRED_FIELDS = ['plate_number']
 
 const inputClass =
-  'w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-shadow'
+  'w-full rounded-xl border border-slate-200/90 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-2xs dark:bg-slate-900/50 dark:text-slate-100 dark:border-white/10 dark:placeholder:text-slate-500 dark:[&>option]:bg-slate-900 dark:[&>option]:text-white'
 
-const labelClass = 'block text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1.5'
+const labelClass = 'block text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400 mb-1.5'
 
 export default function VehicleEditForm({ vehicle, onSuccess }) {
   const [form, setForm] = useState({
     id: vehicle?.id ?? vehicle?.vehicle_id ?? '',
     plate_number: vehicle?.plate_number ?? '',
+    vehicleTypeId: vehicle?.vehicleTypeId ?? '',
     vehicleImage: vehicle?.vehicleImage ?? '',
     brand: vehicle?.brand ?? '',
     model: vehicle?.model ?? '',
@@ -34,12 +37,13 @@ export default function VehicleEditForm({ vehicle, onSuccess }) {
 
   const [validationError, setValidationError] = useState(null)
   const upsertVehicle = useUpsertVehicle()
+  const { data: vehicleTypes = [], isLoading: typesLoading } = useVehicleTypes()
 
   const handleChange = (field) => (e) => {
     setForm((prev) => ({ ...prev, [field]: e.target.value }))
+    if (validationError) setValidationError(null)
   }
 
-  // Handle image conversion to Base64
   const handleImageChange = (e) => {
     const file = e.target.files[0]
     if (!file) return
@@ -73,7 +77,7 @@ export default function VehicleEditForm({ vehicle, onSuccess }) {
   }
 
   return (
-    <div className="w-full relative">
+    <div className="w-full relative space-y-4">
       {validationError && (
         <Alert
           variant="warning"
@@ -109,14 +113,17 @@ export default function VehicleEditForm({ vehicle, onSuccess }) {
 
       <form onSubmit={handleSubmit} className="space-y-6" noValidate>
         {/* Vehicle Information */}
-        <section>
-          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">
-            Vehicle Information
-          </h3>
+        <div className="bg-slate-50/60 dark:bg-slate-900/40 border border-slate-200/80 dark:border-white/10 rounded-2xl p-5 sm:p-6 shadow-2xs space-y-4 backdrop-blur-sm">
+          <div className="border-b border-slate-200/60 dark:border-white/10 pb-3">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              Vehicle Information
+            </h3>
+          </div>
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label htmlFor="plate_number" className={labelClass}>
-                Plate Number <span className="text-primary">*</span>
+                Plate Number <span className="text-rose-500">*</span>
               </label>
               <input
                 id="plate_number"
@@ -126,6 +133,29 @@ export default function VehicleEditForm({ vehicle, onSuccess }) {
                 className={inputClass}
                 placeholder="Enter Plate Number"
               />
+            </div>
+
+            <div>
+              <label htmlFor="vehicleTypeId" className={labelClass}>
+                Vehicle Type
+              </label>
+              <select
+                id="vehicleTypeId"
+                value={form.vehicleTypeId}
+                onChange={handleChange('vehicleTypeId')}
+                disabled={typesLoading}
+                className={inputClass}
+              >
+                <option value="">{typesLoading ? 'Loading...' : 'Select Vehicle Type'}</option>
+                {vehicleTypes.map((t) => {
+                  const id = t.id ?? t.vt_id
+                  return (
+                    <option key={id} value={id}>
+                      {t.name ?? t.vt_name}
+                    </option>
+                  )
+                })}
+              </select>
             </div>
 
             <div>
@@ -212,7 +242,7 @@ export default function VehicleEditForm({ vehicle, onSuccess }) {
               />
             </div>
 
-            <div>
+            <div className="sm:col-span-2">
               <label htmlFor="status" className={labelClass}>
                 Status
               </label>
@@ -236,14 +266,14 @@ export default function VehicleEditForm({ vehicle, onSuccess }) {
             <div className="sm:col-span-2">
               <label className={labelClass}>Vehicle Image</label>
               {form.vehicleImage ? (
-                <div className="flex items-center gap-4 p-3 rounded-xl border border-slate-200 bg-slate-50">
+                <div className="flex items-center gap-4 p-3 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900/50 shadow-2xs">
                   <img
                     src={form.vehicleImage}
                     alt="Vehicle preview"
-                    className="w-16 h-16 object-cover rounded-lg border border-slate-300"
+                    className="w-16 h-16 object-cover rounded-lg border border-slate-300 dark:border-white/10"
                   />
                   <div className="flex-1 truncate">
-                    <p className="text-xs font-medium text-slate-700">Image loaded successfully</p>
+                    <p className="text-xs font-medium text-slate-700 dark:text-slate-200">Image loaded successfully</p>
                     <p className="text-[10px] text-slate-400 truncate">
                       Base64 encoded string ready
                     </p>
@@ -251,17 +281,17 @@ export default function VehicleEditForm({ vehicle, onSuccess }) {
                   <button
                     type="button"
                     onClick={handleRemoveImage}
-                    className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                    className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors"
                     title="Remove Image"
                   >
                     <X className="w-4 h-4" />
                   </button>
                 </div>
               ) : (
-                <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-slate-300 rounded-xl cursor-pointer bg-slate-50 hover:bg-slate-100 transition-colors">
+                <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-slate-300 dark:border-white/15 rounded-xl cursor-pointer bg-white dark:bg-slate-900/50 hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors shadow-2xs">
                   <div className="flex flex-col items-center justify-center pt-5 pb-6">
                     <Upload className="w-6 h-6 text-slate-400 mb-2" />
-                    <p className="text-xs text-slate-600 font-medium">
+                    <p className="text-xs text-slate-600 dark:text-slate-300 font-medium">
                       Click to upload vehicle image
                     </p>
                     <p className="text-[10px] text-slate-400 mt-0.5">PNG, JPG, or WEBP</p>
@@ -276,15 +306,16 @@ export default function VehicleEditForm({ vehicle, onSuccess }) {
               )}
             </div>
           </div>
-        </section>
-
-        <hr className="border-slate-100" />
+        </div>
 
         {/* Registration & Documentation */}
-        <section>
-          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">
-            Registration & Documentation
-          </h3>
+        <div className="bg-slate-50/60 dark:bg-slate-900/40 border border-slate-200/80 dark:border-white/10 rounded-2xl p-5 sm:p-6 shadow-2xs space-y-4 backdrop-blur-sm">
+          <div className="border-b border-slate-200/60 dark:border-white/10 pb-3">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              Registration & Documentation
+            </h3>
+          </div>
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label htmlFor="file_number" className={labelClass}>
@@ -350,16 +381,18 @@ export default function VehicleEditForm({ vehicle, onSuccess }) {
                 rows="3"
                 value={form.remarks}
                 onChange={handleChange('remarks')}
-                className={inputClass}
+                className={inputClass + ' resize-none'}
                 placeholder="Enter any additional notes..."
               />
             </div>
           </div>
-        </section>
+        </div>
 
-        <Button type="submit" loading={upsertVehicle.isPending} className="w-full">
-          Update Vehicle
-        </Button>
+        <div className="flex items-center justify-end pt-2">
+          <Button type="submit" variant="liquid" loading={upsertVehicle.isPending} className="w-full sm:w-auto min-w-[140px]">
+            Update Vehicle
+          </Button>
+        </div>
       </form>
     </div>
   )

@@ -13,6 +13,8 @@ const { requestCallbackRouter } = require('../routes/request-callback.routes')
 const { pendingRequestApprovalRouter } = require('../routes/pending-request-approval.routes')
 const { masterStoresRouter } = require('../routes/master-stores.routes')
 const { vehicleTypesRouter } = require('../routes/vehicle-types.routes')
+const { dispatchRouter } = require('../routes/dispatch.routes')
+const { liveLocationRoutes } = require('../routes/live-location.routes.js')
 
 const initRoutes = (app) => {
   app.use('/api/health', healthRouter)
@@ -30,8 +32,11 @@ const initRoutes = (app) => {
   app.use('/api/pending-request', pendingRequestRouter)
   app.use('/api/request-callback', requestCallbackRouter)
   app.use('/api/pending-request-approval', auth, pendingRequestApprovalRouter)
+  app.use('/api/dispatch', auth, dispatchRouter)
 
   app.use('/api/vehicle-types', vehicleTypesRouter)
+
+  app.use('/api/live-location', liveLocationRoutes)
 }
 
 module.exports = { initRoutes }

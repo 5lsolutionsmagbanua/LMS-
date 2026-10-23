@@ -9,9 +9,16 @@ import Button from '@/components/ui/Button'
 const REQUIRED_FIELDS = ['first_name', 'last_name', 'username', 'branch_id', 'role_id']
 
 const inputClass =
-  'w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#E31837] focus:border-transparent transition-shadow'
+  'w-full rounded-xl border border-slate-200/90 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 ' +
+  'focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all shadow-2xs ' +
+  'dark:bg-slate-900/50 dark:text-slate-100 dark:border-white/10 dark:placeholder:text-slate-500 ' +
+  'dark:[&>option]:bg-slate-900 dark:[&>option]:text-white'
 
-const labelClass = 'block text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1.5'
+const labelClass =
+  'mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400'
+
+const sectionTitleClass =
+  'text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400'
 
 export default function UserEditForm({ user, onSuccess }) {
   const [form, setForm] = useState({
@@ -34,6 +41,7 @@ export default function UserEditForm({ user, onSuccess }) {
 
   const handleChange = (field) => (e) => {
     setForm((prev) => ({ ...prev, [field]: e.target.value }))
+    if (validationError) setValidationError(null)
   }
 
   const validate = () => {
@@ -53,18 +61,18 @@ export default function UserEditForm({ user, onSuccess }) {
       onSuccess: () => {
         setTimeout(() => {
           onSuccess?.()
-        }, 1000)
+        }, 600)
       },
     })
   }
 
   if (referenceDataLoading) {
     return (
-      <div className="space-y-4 animate-pulse">
+      <div className="animate-pulse space-y-4">
         {[...Array(4)].map((_, i) => (
           <div key={i} className="space-y-1.5">
-            <div className="h-3 w-20 bg-slate-200 rounded" />
-            <div className="h-10 w-full bg-slate-100 rounded-lg" />
+            <div className="h-3 w-20 rounded bg-white/60 dark:bg-white/10" />
+            <div className="h-10 w-full rounded-xl bg-white/40 dark:bg-white/5" />
           </div>
         ))}
       </div>
@@ -72,7 +80,7 @@ export default function UserEditForm({ user, onSuccess }) {
   }
 
   return (
-    <div className="w-full relative">
+    <div className="relative w-full space-y-4">
       {validationError && (
         <Alert
           variant="warning"
@@ -96,15 +104,16 @@ export default function UserEditForm({ user, onSuccess }) {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-6" noValidate>
-        {/* Personal info */}
-        <section>
-          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">
-            Personal information
-          </h3>
+        {/* Personal info Card */}
+        <div className="bg-slate-50/60 dark:bg-slate-900/40 border border-slate-200/80 dark:border-white/10 rounded-2xl p-5 sm:p-6 shadow-2xs space-y-4 backdrop-blur-sm">
+          <div className="border-b border-slate-200/60 dark:border-white/10 pb-3">
+            <h3 className={sectionTitleClass}>Personal information</h3>
+          </div>
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label htmlFor="first_name" className={labelClass}>
-                First name <span className="text-[#E31837]">*</span>
+                First name <span className="text-rose-500">*</span>
               </label>
               <input
                 id="first_name"
@@ -112,12 +121,12 @@ export default function UserEditForm({ user, onSuccess }) {
                 value={form.first_name}
                 onChange={handleChange('first_name')}
                 className={inputClass}
-                placeholder="Juan"
+                placeholder="Enter First Name"
               />
             </div>
             <div>
               <label htmlFor="last_name" className={labelClass}>
-                Last name <span className="text-[#E31837]">*</span>
+                Last name <span className="text-rose-500">*</span>
               </label>
               <input
                 id="last_name"
@@ -125,7 +134,7 @@ export default function UserEditForm({ user, onSuccess }) {
                 value={form.last_name}
                 onChange={handleChange('last_name')}
                 className={inputClass}
-                placeholder="Dela Cruz"
+                placeholder="Enter Last Name"
               />
             </div>
             <div className="sm:col-span-2">
@@ -138,23 +147,22 @@ export default function UserEditForm({ user, onSuccess }) {
                 value={form.email}
                 onChange={handleChange('email')}
                 className={inputClass}
-                placeholder="jdelacruz@company.com"
+                placeholder="Enter Email Address"
               />
             </div>
           </div>
-        </section>
+        </div>
 
-        <hr className="border-slate-100" />
+        {/* Account credentials Card */}
+        <div className="bg-slate-50/60 dark:bg-slate-900/40 border border-slate-200/80 dark:border-white/10 rounded-2xl p-5 sm:p-6 shadow-2xs space-y-4 backdrop-blur-sm">
+          <div className="border-b border-slate-200/60 dark:border-white/10 pb-3">
+            <h3 className={sectionTitleClass}>Account credentials</h3>
+          </div>
 
-        {/* Account credentials */}
-        <section>
-          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">
-            Account credentials
-          </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="sm:col-span-2">
+          <div className="grid grid-cols-1 gap-4">
+            <div>
               <label htmlFor="username" className={labelClass}>
-                Username <span className="text-[#E31837]">*</span>
+                Username <span className="text-rose-500">*</span>
               </label>
               <input
                 id="username"
@@ -162,23 +170,22 @@ export default function UserEditForm({ user, onSuccess }) {
                 value={form.username}
                 onChange={handleChange('username')}
                 className={inputClass}
-                placeholder="jdelacruz"
+                placeholder="Enter Username"
               />
             </div>
           </div>
-        </section>
+        </div>
 
-        <hr className="border-slate-100" />
+        {/* Assignment Card */}
+        <div className="bg-slate-50/60 dark:bg-slate-900/40 border border-slate-200/80 dark:border-white/10 rounded-2xl p-5 sm:p-6 shadow-2xs space-y-4 backdrop-blur-sm">
+          <div className="border-b border-slate-200/60 dark:border-white/10 pb-3">
+            <h3 className={sectionTitleClass}>Assignment</h3>
+          </div>
 
-        {/* Assignment */}
-        <section>
-          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">
-            Assignment
-          </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label htmlFor="branch_id" className={labelClass}>
-                Branch <span className="text-[#E31837]">*</span>
+                Branch <span className="text-rose-500">*</span>
               </label>
               <select
                 id="branch_id"
@@ -186,7 +193,7 @@ export default function UserEditForm({ user, onSuccess }) {
                 onChange={handleChange('branch_id')}
                 className={inputClass}
               >
-                <option value="">Select branch</option>
+                <option value="">Select branch...</option>
                 {branches?.map((branch) => (
                   <option key={branch.id} value={branch.id}>
                     {branch.branch_name}
@@ -196,7 +203,7 @@ export default function UserEditForm({ user, onSuccess }) {
             </div>
             <div>
               <label htmlFor="role_id" className={labelClass}>
-                Role <span className="text-[#E31837]">*</span>
+                Role <span className="text-rose-500">*</span>
               </label>
               <select
                 id="role_id"
@@ -204,7 +211,7 @@ export default function UserEditForm({ user, onSuccess }) {
                 onChange={handleChange('role_id')}
                 className={inputClass}
               >
-                <option value="">Select role</option>
+                <option value="">Select role...</option>
                 {roles?.map((role) => (
                   <option key={role.id} value={role.id}>
                     {role.role_name}
@@ -213,11 +220,18 @@ export default function UserEditForm({ user, onSuccess }) {
               </select>
             </div>
           </div>
-        </section>
+        </div>
 
-        <Button type="submit" loading={upsertUser.isPending} className="w-full">
-          Save changes
-        </Button>
+        <div className="flex items-center justify-end pt-2">
+          <Button
+            type="submit"
+            variant="liquid"
+            loading={upsertUser.isPending}
+            className="w-full sm:w-auto min-w-[140px]"
+          >
+            Save Changes
+          </Button>
+        </div>
       </form>
     </div>
   )

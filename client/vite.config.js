@@ -21,13 +21,13 @@ export default defineConfig(({ mode }) => {
 
   const proxyConfig = {
     '/api': {
-      target: apiTarget || 'http://localhost:3000',
+      target: apiTarget || 'http://localhost:3001',
       changeOrigin: true,
       secure: false,
       // rewrite: (path) => path.replace(/^\/api/, ''),
     },
     '/ws': {
-      target: apiTarget || 'http://localhost:3000',
+      target: apiTarget || 'http://localhost:3001',
       ws: true,
       changeOrigin: true,
       secure: false,

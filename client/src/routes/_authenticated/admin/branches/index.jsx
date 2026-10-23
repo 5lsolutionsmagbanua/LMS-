@@ -1,15 +1,16 @@
+// client/src/routes/_authenticated/admin/branches/index.jsx
 import { createFileRoute } from '@tanstack/react-router'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import Button from '@/components/ui/Button'
-import Modal from '@/components/ui/Modal'
-import ActionButtons from '@/components/ui/ActionButtons'
-import EditLink from '@/components/ui/EditLink'
-import SearchBar from '@/components/ui/SearchBar'
-import Pagination from '@/components/ui/Pagination'
-import Table from '@/components/ui/Table'
-import Alert from '@/components/ui/Alert'
-import { useMasterBranches, useUpsertBranch } from '@/hooks/useMasterBranches'
-import { usePermissionCheck } from '@/hooks/usePermissionCheck'
+import Button from '../../../../components/ui/Button'
+import Modal from '../../../../components/ui/Modal'
+import ActionButtons from '../../../../components/ui/ActionButtons'
+import EditLink from '../../../../components/ui/EditLink'
+import SearchBar from '../../../../components/ui/SearchBar'
+import Pagination from '../../../../components/ui/Pagination'
+import Table from '../../../../components/ui/Table'
+import Alert from '../../../../components/ui/Alert'
+import { useMasterBranches, useUpsertBranch } from '../../../../hooks/useMasterBranches'
+import { usePermissionCheck } from '../../../../hooks/usePermissionCheck'
 import BranchForm from './branchesForm/BranchForm'
 
 export const Route = createFileRoute('/_authenticated/admin/branches/')({
@@ -89,38 +90,50 @@ function BranchesRoute() {
       label: 'Branch ID',
       sortable: true,
       truncate: true,
-      render: (row) => <span className="font-mono text-xs text-slate-500">{row.id}</span>,
+      render: (row) => (
+        <span className="font-mono text-xs text-slate-500 dark:text-slate-400">{row.id}</span>
+      ),
     },
     {
       key: 'name',
       label: 'Branch Name',
       sortable: true,
-      render: (row) => <span className="font-medium text-slate-900">{row.name}</span>,
+      render: (row) => (
+        <span className="font-medium text-slate-900 dark:text-slate-100">{row.name}</span>
+      ),
     },
     {
       key: 'company_name',
       label: 'Company Name',
       sortable: true,
-      render: (row) => <span className="text-slate-600">{row.company_name || '—'}</span>,
+      render: (row) => (
+        <span className="text-slate-600 dark:text-slate-400">{row.company_name || '—'}</span>
+      ),
     },
     {
       key: 'email',
       label: 'Email',
       sortable: true,
-      render: (row) => <span className="text-slate-600">{row.email || '—'}</span>,
+      render: (row) => (
+        <span className="text-slate-600 dark:text-slate-400">{row.email || '—'}</span>
+      ),
     },
     {
       key: 'contact_number',
       label: 'Contact Number',
       sortable: true,
-      render: (row) => <span className="text-slate-600">{row.contact_number || '—'}</span>,
+      render: (row) => (
+        <span className="text-slate-600 dark:text-slate-400">{row.contact_number || '—'}</span>
+      ),
     },
     {
       key: 'address',
       label: 'Address',
       sortable: true,
       render: (row) => (
-        <span className="text-slate-600 truncate max-w-xs block">{row.address || '—'}</span>
+        <span className="text-slate-600 dark:text-slate-400 truncate max-w-xs block">
+          {row.address || '—'}
+        </span>
       ),
     },
     {
@@ -135,7 +148,8 @@ function BranchesRoute() {
 
   return (
     <div className="w-full pb-12">
-      <div className="bg-slate-50/50 border border-slate-200/80 rounded-2xl p-4 sm:p-6 shadow-xs space-y-6 w-full">
+      {/* Outer Container with Thicker Theme-Adaptive Border (border-2) */}
+      <div className="bg-slate-50/60 dark:bg-slate-900/40 border-2 border-primary/20 dark:border-primary/30 rounded-2xl p-4 sm:p-6 shadow-2xs space-y-6 w-full backdrop-blur-sm transition-colors">
         {upsertBranch.isError && (
           <Alert variant="error" title="Operation Failed" onDismiss={() => upsertBranch.reset()}>
             {upsertBranch.error?.response?.data?.message || 'Something went wrong while saving.'}
@@ -148,41 +162,33 @@ function BranchesRoute() {
           </Alert>
         )}
 
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-6 rounded-xl border border-slate-100 shadow-xs">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900">Branch Management</h1>
-            <p className="text-sm text-slate-500 mt-0.5">
-              {/* Manage company locations, facilities, and branch setups. */}
-            </p>
-          </div>
+        {/* Gradient Header Banner */}
+        <div className="bg-gradient-to-r from-primary via-primary/90 to-primary/80 p-6 rounded-xl border border-white/10 shadow-md backdrop-blur-md text-on-primary">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight h1 drop-shadow-2xs">
+                Branch Management
+              </h1>
+              <p className="text-sm opacity-75 mt-0.5">
+                Manage company locations, facilities, and branch setups.
+              </p>
+            </div>
 
-          {can('branches', 'write') && (
-            <Button
-              variant="primary"
-              size="md"
-              icon={<span className="text-lg leading-none">+</span>}
-              onClick={handleOpenCreate}
-            >
-              Add New Branch
-            </Button>
-          )}
-        </div>
-
-        <div className="bg-white p-4 rounded-xl border border-slate-100 shadow-xs flex items-center justify-between gap-4">
-          <div className="w-full md:w-96">
-            <SearchBar
-              value={search}
-              onSearch={handleSearch}
-              placeholder="Search by ID, name, email..."
-            />
-          </div>
-          <div className="hidden md:block text-xs font-medium text-slate-400 pr-2">
-            Total Branches:{' '}
-            <span className="text-slate-700 font-semibold">{filteredBranches.length}</span>
+            {can('branches', 'write') && (
+              <Button
+                variant="liquid"
+                size="md"
+                icon={<span className="text-lg leading-none">+</span>}
+                onClick={handleOpenCreate}
+              >
+                Add New Branch
+              </Button>
+            )}
           </div>
         </div>
 
-        <div className="bg-white rounded-xl border border-slate-100 shadow-xs overflow-hidden w-full">
+        {/* Table Container with Thicker Theme-Adaptive Border (border-2) */}
+        <div className="bg-white dark:bg-slate-900/60 rounded-xl border-2 border-primary/20 dark:border-primary/30 shadow-2xs overflow-hidden w-full transition-colors">
           <Table
             columns={columns}
             rows={paginatedBranches}
@@ -193,7 +199,24 @@ function BranchesRoute() {
             minRows={pageSize}
           />
 
-          <div className="p-4 border-t border-slate-100 bg-slate-50/50">
+          {/* Merged Footer: Search Bar, Total Branches & Pagination in a Row */}
+          <div className="p-4 border-t-2 border-primary/20 dark:border-primary/30 bg-slate-50/50 dark:bg-slate-900/40 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-4 w-full sm:w-auto">
+              <div className="w-full sm:w-72">
+                <SearchBar
+                  value={search}
+                  onSearch={handleSearch}
+                  placeholder="Search by ID, name, email..."
+                />
+              </div>
+              <div className="text-xs font-medium text-slate-500 dark:text-slate-400 whitespace-nowrap hidden sm:block">
+                Total Branches:{' '}
+                <span className="font-semibold text-slate-700 dark:text-slate-200">
+                  {filteredBranches.length}
+                </span>
+              </div>
+            </div>
+
             <Pagination
               page={page}
               totalItems={filteredBranches.length}

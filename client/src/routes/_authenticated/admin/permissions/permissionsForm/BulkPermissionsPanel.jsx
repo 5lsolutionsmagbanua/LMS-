@@ -1,8 +1,9 @@
-// client/src/routes/authenticated/developer/permissions/BulkPermissionsPanel.jsx
+// client/src/routes/_authenticated/admin/permissions/permissionsForm/BulkPermissionsPanel.jsx
 import { useEffect, useMemo, useState } from 'react'
 import RoleTabs from './RoleTabs'
 import ModuleCard from './ModuleCard'
 import Alert from '@/components/ui/Alert'
+import Button from '@/components/ui/Button'
 import { useAllPermissions } from '@/hooks/useMasterPermissions'
 import { useBulkPermissions } from '@/hooks/useBulkPermissions'
 import { useAuthContext } from '@/hooks/useAuth'
@@ -15,11 +16,6 @@ export default function BulkPermissionsPanel() {
 
   const roleList = useMemo(() => roles ?? [], [roles])
 
-  // Land on the signed-in user's own role once data arrives, so an admin
-  // opening this screen sees "Administrator" selected and a developer sees
-  // "Developer" — not whichever role happens to be first in the list.
-  // Falls back to roleList[0] only if the user's own role isn't in the
-  // list for some reason (e.g. it was deleted after they logged in).
   useEffect(() => {
     if (activeRoleId || !roleList.length) return
 
@@ -48,10 +44,13 @@ export default function BulkPermissionsPanel() {
   if (isLoading) {
     return (
       <div className="space-y-5">
-        <div className="h-10 w-72 animate-pulse rounded-lg bg-slate-200" />
+        <div className="h-10 w-72 animate-pulse rounded-xl bg-slate-200/60 dark:bg-white/10" />
         <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
           {[...Array(6)].map((_, i) => (
-            <div key={i} className="h-52 animate-pulse rounded-xl bg-slate-100" />
+            <div
+              key={i}
+              className="h-52 animate-pulse rounded-2xl bg-white/40 dark:bg-slate-900/40 border border-slate-200/60 dark:border-white/10"
+            />
           ))}
         </div>
       </div>
@@ -60,9 +59,11 @@ export default function BulkPermissionsPanel() {
 
   if (isError) {
     return (
-      <div className="rounded-xl border border-rose-200 bg-rose-50/60 px-5 py-6 text-center">
-        <p className="text-sm font-semibold text-rose-700">Couldn't load permissions.</p>
-        <p className="mt-1 text-xs text-rose-600">
+      <div className="rounded-2xl border border-rose-200/80 bg-rose-50/60 dark:bg-rose-950/20 dark:border-rose-900/50 px-5 py-6 text-center backdrop-blur-sm">
+        <p className="text-sm font-semibold text-rose-700 dark:text-rose-400">
+          Couldn't load permissions.
+        </p>
+        <p className="mt-1 text-xs text-rose-600 dark:text-rose-300">
           {error?.response?.data?.message || 'Check your connection and reload the page.'}
         </p>
       </div>
@@ -90,12 +91,12 @@ export default function BulkPermissionsPanel() {
         </Alert>
       )}
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-2 text-sm font-semibold text-primary">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between bg-white dark:bg-slate-900/60 p-4 rounded-xl border border-slate-100 dark:border-white/10 shadow-2xs">
+        <div className="flex items-center gap-2 text-sm font-semibold text-[var(--theme-primary)]">
           <ShieldIcon className="h-4 w-4" />
           {activeRole ? `What ${activeRole.roleName} can do` : 'Permissions'}
           {isDirty && (
-            <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-700">
+            <span className="rounded-full bg-amber-50 dark:bg-amber-950/40 border border-amber-200/60 dark:border-amber-800/50 px-2 py-0.5 text-[11px] font-semibold text-amber-700 dark:text-amber-400">
               Unsaved
             </span>
           )}
@@ -106,21 +107,22 @@ export default function BulkPermissionsPanel() {
             type="button"
             onClick={reset}
             disabled={!isDirty || isSaving}
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 transition-colors hover:text-slate-800 disabled:cursor-not-allowed disabled:opacity-40"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400 transition-colors hover:text-slate-800 dark:hover:text-slate-200 disabled:cursor-not-allowed disabled:opacity-40 cursor-pointer"
           >
             <ResetIcon className="h-3.5 w-3.5" />
             Undo changes
           </button>
 
-          <button
+          <Button
             type="button"
+            variant="liquid"
             onClick={save}
             disabled={!isDirty || isSaving}
-            className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-white shadow-sm shadow-primary/25 transition-all hover:opacity-90 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-primary/40 disabled:cursor-not-allowed disabled:opacity-50"
+            loading={isSaving}
+            icon={<SaveIcon className="h-4 w-4" />}
           >
-            <SaveIcon className="h-4 w-4" />
             {isSaving ? 'Saving…' : `Save permissions (${grantCount})`}
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -139,11 +141,11 @@ export default function BulkPermissionsPanel() {
       </div>
 
       {grantCount === 0 && (
-        <div className="rounded-xl border border-dashed border-slate-300 bg-white/80 px-4 py-6 text-center">
-          <p className="text-sm font-medium text-slate-600">
+        <div className="rounded-2xl border border-dashed border-slate-300 dark:border-white/15 bg-white/80 dark:bg-slate-900/40 px-4 py-6 text-center backdrop-blur-sm shadow-2xs">
+          <p className="text-sm font-medium text-slate-600 dark:text-slate-300">
             {activeRole?.roleName} has no access to anything.
           </p>
-          <p className="mt-1 text-xs text-slate-400">
+          <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
             Anyone signed in with this role will see an empty dashboard. Tick at least one box
             before saving.
           </p>

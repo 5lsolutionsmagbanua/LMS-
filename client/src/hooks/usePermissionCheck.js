@@ -1,38 +1,45 @@
-// client/src/hooks/usePermissionCheck.js
 import { useCallback, useMemo } from 'react'
 import { useMyPermissions } from './useMasterPermissions'
 import { emptyMatrix } from '../constants/permissionCatalog'
+import { normalizePermissions } from '../constants/permissionsMap'
 import { useAuthContext } from './useAuth'
+import { getUserRoles, isSuperUserRole } from '../utils/roleRouting'
 
 /**
- * Yes/no checks for the signed-in user, for hiding controls they can't use.
+ * Yes/no checks for the signed-in user, used to hide controls they can't use.
+ * This is not a security boundary: the server checks every request again.
  *
- * This is about not showing dead buttons. It is not a security boundary — the
- * same checks run in requirePermission on every endpoint, so a user who works
- * around the UI still gets a 403.
- *
- * While the query is loading, every check returns false. Defaulting to false
- * means a brief flash of missing buttons on first paint rather than buttons
- * that appear and then vanish, which is the more confusing of the two.
- *
- * @example
- *   const { can, isLoading } = usePermissionCheck()
- *   {can('stores', 'write') && <button>Add store</button>}
+ * Super roles get every permission, matching the server bypass and the route guard.
+ * Other roles read their matrix through normalizePermissions, the same helper the
+ * route guard uses, so every response shape is read the same way.
  */
 export const usePermissionCheck = () => {
   const { user } = useAuthContext()
   const { data, isLoading, isError } = useMyPermissions({ enabled: Boolean(user) })
 
-  const matrix = useMemo(() => data?.permissions ?? emptyMatrix(), [data])
+  const isSuper = useMemo(() => isSuperUserRole(getUserRoles(user)), [user])
 
-  const can = useCallback((moduleKey, action) => Boolean(matrix?.[moduleKey]?.[action]), [matrix])
+  const matrix = useMemo(() => {
+    const raw = data?.permissions ?? data
+    if (!raw) return emptyMatrix()
+    return normalizePermissions(raw)
+  }, [data])
+
+  const can = useCallback(
+    (moduleKey, action) => {
+      if (isSuper) return true
+      return Boolean(matrix?.[moduleKey]?.[action])
+    },
+    [matrix, isSuper],
+  )
 
   const canSeeModule = useCallback(
     (moduleKey) => {
+      if (isSuper) return true
       const flags = matrix?.[moduleKey]
       return Boolean(flags && (flags.read || flags.write || flags.update))
     },
-    [matrix],
+    [matrix, isSuper],
   )
 
   return {

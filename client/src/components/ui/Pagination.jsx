@@ -1,14 +1,13 @@
 // client/src/components/ui/Pagination.jsx
 export default function Pagination({ page, totalItems, pageSize = 4, onPageChange }) {
-  // Automatically defaults to 4 items per page if pageSize is omitted
-  const totalPages = Math.ceil(totalItems / pageSize)
+  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize))
 
   const goTo = (p) => {
     if (p < 1 || p > totalPages) return
     onPageChange(p)
   }
 
-  // Calculate a sliding window of up to 4 page numbers
+  // Sliding window of up to 4 page numbers
   const getVisiblePages = () => {
     let start = Math.max(1, page - 1)
     let end = start + 3
@@ -22,7 +21,7 @@ export default function Pagination({ page, totalItems, pageSize = 4, onPageChang
   const visiblePages = getVisiblePages()
 
   return (
-    <div className="flex items-center justify-center sm:justify-end gap-1.5 py-2 px-1">
+    <div className="flex items-center justify-center gap-1.5 px-1 py-2 sm:justify-end">
       <IconButton onClick={() => goTo(1)} disabled={page === 1} label="First page">
         <ChevronsLeft />
       </IconButton>
@@ -30,24 +29,36 @@ export default function Pagination({ page, totalItems, pageSize = 4, onPageChang
         <ChevronLeft />
       </IconButton>
 
-      {visiblePages.map((p) => (
-        <button
-          key={p}
-          onClick={() => goTo(p)}
-          className={`w-9 h-9 rounded-xl text-sm font-semibold transition-all duration-200 ${
-            p === page
-              ? 'bg-primary text-white shadow-md shadow-primary/25 scale-105'
-              : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
-          }`}
-        >
-          {p}
-        </button>
-      ))}
+      {visiblePages.map((p) => {
+        const isActive = p === page
+        return (
+          <button
+            key={p}
+            onClick={() => goTo(p)}
+            aria-current={isActive ? 'page' : undefined}
+            className={`h-9 w-9 rounded-xl border text-sm font-semibold transition-all duration-300 ${
+              isActive
+                ? 'scale-105 border-primary bg-primary text-on-primary shadow-[inset_0_1px_0_rgb(255_255_255/0.35),0_8px_20px_-6px] shadow-primary/50 ring-1 ring-slate-900/10 dark:ring-white/20'
+                : 'border-transparent text-slate-600 hover:border-slate-200/80 hover:bg-slate-900/5 hover:text-slate-900 dark:text-slate-300 dark:hover:border-white/10 dark:hover:bg-white/10 dark:hover:text-white'
+            }`}
+          >
+            {p}
+          </button>
+        )
+      })}
 
-      <IconButton onClick={() => goTo(page + 1)} disabled={page === totalPages} label="Next page">
+      <IconButton
+        onClick={() => goTo(page + 1)}
+        disabled={page === totalPages}
+        label="Next page"
+      >
         <ChevronRight />
       </IconButton>
-      <IconButton onClick={() => goTo(totalPages)} disabled={page === totalPages} label="Last page">
+      <IconButton
+        onClick={() => goTo(totalPages)}
+        disabled={page === totalPages}
+        label="Last page"
+      >
         <ChevronsRight />
       </IconButton>
     </div>
@@ -60,7 +71,7 @@ function IconButton({ onClick, disabled, label, children }) {
       onClick={onClick}
       disabled={disabled}
       aria-label={label}
-      className="w-9 h-9 flex items-center justify-center rounded-xl border border-slate-200/80 bg-white text-slate-500 hover:bg-slate-100 hover:text-slate-900 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent transition-all duration-200 shadow-sm"
+      className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200/80 bg-white/70 text-slate-600 shadow-[inset_0_1px_0_rgb(255_255_255/0.7)] backdrop-blur transition-all duration-300 hover:bg-white hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-white/70 dark:border-white/10 dark:bg-white/10 dark:text-slate-300 dark:shadow-[inset_0_1px_0_rgb(255_255_255/0.08)] dark:hover:bg-white/15 dark:hover:text-white dark:disabled:hover:bg-white/10"
     >
       {children}
     </button>

@@ -1,5 +1,6 @@
 // client/src/context/ThemeContext.jsx
 import { createContext, useContext, useEffect, useState } from 'react'
+import { DEFAULT_THEME, THEME_IDS } from '../config/themeOptions'
 
 export const ThemeContext = createContext()
 
@@ -11,8 +12,10 @@ export function ThemeProvider({ children }) {
     )
   })
 
+  // Validate the saved theme so an unknown or outdated value falls back to the default
   const [colorTheme, setColorTheme] = useState(() => {
-    return localStorage.getItem('color-theme') || 'default'
+    const saved = localStorage.getItem('color-theme')
+    return THEME_IDS.includes(saved) ? saved : DEFAULT_THEME
   })
 
   // Optional: A flag to lock/disable theme changes if needed (e.g., user role restriction)
@@ -37,7 +40,11 @@ export function ThemeProvider({ children }) {
   const handleThemeChange = (newTheme) => {
     if (isThemeLocked) {
       console.warn('Theme changes are currently locked.')
-      return // Exit early, unable to change color
+      return
+    }
+    if (!THEME_IDS.includes(newTheme)) {
+      console.warn(`Unknown theme: ${newTheme}`)
+      return
     }
     setColorTheme(newTheme)
   }

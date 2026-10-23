@@ -1,15 +1,17 @@
+// client/src/routes/_authenticated/admin/stores/storesForm/StoreForm.jsx
 import { useState } from 'react'
-// Replace relative hook/component imports with alias imports:
 import Button from '@/components/ui/Button'
 import Alert from '@/components/ui/Alert'
 import { useUpsertStore } from '@/hooks/useMasterStores'
 
 const REQUIRED_FIELDS = ['store_name', 'store_code']
 
-const inputClass =
-  'w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#E31837] focus:border-transparent transition-shadow'
+const inputClass = (error) =>
+  `w-full rounded-xl border bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-2xs dark:bg-slate-900/50 dark:text-slate-100 dark:border-white/10 dark:placeholder:text-slate-500 ${
+    error ? 'border-rose-500 bg-rose-50/10 dark:bg-rose-950/20' : 'border-slate-200/90'
+  }`
 
-const labelClass = 'block text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1.5'
+const labelClass = 'block text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400 mb-1.5'
 
 export default function StoreForm({ store, onSuccess }) {
   const [form, setForm] = useState({
@@ -28,6 +30,7 @@ export default function StoreForm({ store, onSuccess }) {
   const handleChange = (field) => (e) => {
     const value = field === 'is_active' ? parseInt(e.target.value, 10) : e.target.value
     setForm((prev) => ({ ...prev, [field]: value }))
+    if (validationError) setValidationError(null)
   }
 
   const validate = () => {
@@ -71,38 +74,45 @@ export default function StoreForm({ store, onSuccess }) {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-6" noValidate>
-        <section>
-          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">
-            Store Information
-          </h3>
+        {/* Store Information Container Card */}
+        <div className="bg-slate-50/60 dark:bg-slate-900/40 border border-slate-200/80 dark:border-white/10 rounded-2xl p-5 sm:p-6 shadow-2xs space-y-4 backdrop-blur-sm">
+          <div className="flex items-center justify-between border-b border-slate-200/60 dark:border-white/10 pb-3">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              Store Information
+            </h3>
+            <span className="text-[11px] font-medium text-slate-400 dark:text-slate-500 bg-slate-200/50 dark:bg-white/5 px-2 py-0.5 rounded-md">
+              Required fields marked with *
+            </span>
+          </div>
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label htmlFor="store_name" className={labelClass}>
-                Store Name <span className="text-[#E31837]">*</span>
+                Store Name <span className="text-rose-500">*</span>
               </label>
               <input
                 id="store_name"
                 type="text"
                 value={form.store_name}
                 onChange={handleChange('store_name')}
-                className={inputClass}
-                placeholder="Enter Store Name"
+                className={inputClass()}
+                placeholder="e.g. Downtown Warehouse"
               />
             </div>
             <div>
               <label htmlFor="store_code" className={labelClass}>
-                Store Code <span className="text-[#E31837]">*</span>
+                Store Code <span className="text-rose-500">*</span>
               </label>
               <input
                 id="store_code"
                 type="text"
                 value={form.store_code}
                 onChange={handleChange('store_code')}
-                className={inputClass}
-                placeholder="Enter Store Code"
+                className={inputClass()}
+                placeholder="e.g. STR-001"
               />
             </div>
-            <div>
+            <div className="sm:col-span-2">
               <label htmlFor="is_active" className={labelClass}>
                 Status
               </label>
@@ -110,21 +120,23 @@ export default function StoreForm({ store, onSuccess }) {
                 id="is_active"
                 value={form.is_active}
                 onChange={handleChange('is_active')}
-                className={inputClass}
+                className={inputClass()}
               >
                 <option value={1}>Active</option>
                 <option value={0}>Inactive</option>
               </select>
             </div>
           </div>
-        </section>
+        </div>
 
-        <hr className="border-slate-100" />
+        {/* Contact Details Container Card */}
+        <div className="bg-slate-50/60 dark:bg-slate-900/40 border border-slate-200/80 dark:border-white/10 rounded-2xl p-5 sm:p-6 shadow-2xs space-y-4 backdrop-blur-sm">
+          <div className="border-b border-slate-200/60 dark:border-white/10 pb-3">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              Contact Details
+            </h3>
+          </div>
 
-        <section>
-          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">
-            Contact Details
-          </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label htmlFor="contact_person" className={labelClass}>
@@ -135,8 +147,8 @@ export default function StoreForm({ store, onSuccess }) {
                 type="text"
                 value={form.contact_person}
                 onChange={handleChange('contact_person')}
-                className={inputClass}
-                placeholder="Enter Contact Person"
+                className={inputClass()}
+                placeholder="e.g. Jane Cruz"
               />
             </div>
             <div>
@@ -148,8 +160,8 @@ export default function StoreForm({ store, onSuccess }) {
                 type="text"
                 value={form.contact_number}
                 onChange={handleChange('contact_number')}
-                className={inputClass}
-                placeholder="Enter Contact Number"
+                className={inputClass()}
+                placeholder="+63 900 000 0000"
               />
             </div>
             <div className="sm:col-span-2">
@@ -161,16 +173,18 @@ export default function StoreForm({ store, onSuccess }) {
                 rows="3"
                 value={form.store_address}
                 onChange={handleChange('store_address')}
-                className={inputClass}
-                placeholder="Enter Complete Store Address"
+                className={inputClass() + ' resize-none'}
+                placeholder="Enter complete store address..."
               />
             </div>
           </div>
-        </section>
+        </div>
 
-        <Button type="submit" loading={upsertStore.isPending} className="w-full">
-          Save changes
-        </Button>
+        <div className="flex items-center justify-end gap-3 pt-2">
+          <Button type="submit" variant="liquid" loading={upsertStore.isPending} className="w-full sm:w-auto min-w-[140px]">
+            {form.id ? 'Save Changes' : 'Create Store'}
+          </Button>
+        </div>
       </form>
     </div>
   )

@@ -13,6 +13,41 @@ const { SESSION_COOKIE_NAME, COOKIE_BASE } = require('../utilities/session.const
 
 const SQL = new SQLQueryBuilder()
 
+const SUPER_ROLE_NAMES = ['admin', 'administrator']
+const isSuperRole = (roleName) =>
+  SUPER_ROLE_NAMES.includes(
+    String(roleName ?? '')
+      .trim()
+      .toLowerCase(),
+  )
+
+// Short-lived cache of the session user row, keyed by user id.
+// Deactivation or a role change takes effect within USER_CACHE_TTL_MS.
+const USER_CACHE_TTL_MS = 60 * 1000
+const userCache = new Map() // userId -> { user, expiresAt }
+
+const getCachedUser = (userId) => {
+  const hit = userCache.get(String(userId))
+  if (!hit) return null
+  if (Date.now() > hit.expiresAt) {
+    userCache.delete(String(userId))
+    return null
+  }
+  return hit.user
+}
+
+const setCachedUser = (userId, user) => {
+  userCache.set(String(userId), { user, expiresAt: Date.now() + USER_CACHE_TTL_MS })
+}
+
+// Drop expired entries once a minute so the map cannot grow without limit
+setInterval(() => {
+  const now = Date.now()
+  for (const [id, entry] of userCache) {
+    if (now > entry.expiresAt) userCache.delete(id)
+  }
+}, 60 * 1000).unref()
+
 const wantsHtml = (req) => req.accepts(['json', 'html']) === 'html'
 
 const sendErrorResponse = async (req, res, statusCode, viewName, defaultMessage) => {
@@ -46,33 +81,41 @@ const handleForbidden = (
   return sendErrorResponse(req, res, 403, '403.html', message)
 }
 
+const USER_COLUMNS = (builder) =>
+  builder.select([
+    { col: Master.Users.cols.id, as: 'id' },
+    { col: Master.Users.cols.username, as: 'username' },
+    { col: Master.Users.cols.first_name, as: 'firstName' },
+    { col: Master.Users.cols.last_name, as: 'lastName' },
+    { col: Master.Users.cols.branch_id, as: 'branchId' },
+    { col: Master.Users.cols.role_id, as: 'roleId' },
+    { col: Master.Role.cols.role_name, as: 'roleName' },
+  ])
+
+const loadUserById = async (userId) => {
+  const { sql, bindings } = USER_COLUMNS(SQL.model(Master.Users))
+    .join(Master.Role.table, Master.Users.cols.role_id, Master.Role.pk)
+    .where(Master.Users.pk, userId)
+    .where(Master.Users.cols.isActive, true)
+    .limit(1)
+    .build()
+  const [result] = await Query(sql, bindings)
+  return result ?? null
+}
+
 /**
  * @name auth
- * @description Enforces standard session cookie checks for authentication.
+ * @description Enforces session checks. The user row is cached for USER_CACHE_TTL_MS
+ *              so high-frequency endpoints don't hit MySQL on every request.
  */
 const auth = async (req, res, next) => {
   try {
-    console.log('=== AUTH DEBUG ===')
-    console.log('VITE_ENV:', process.env.VITE_ENV)
-    console.log('SWAGGER_TOKEN env:', process.env.SWAGGER_TOKEN)
-    console.log('x-swagger-token header:', req.headers['x-swagger-token'])
-    console.log('Token match:', req.headers['x-swagger-token'] === process.env.SWAGGER_TOKEN)
-    console.log('==================')
-    // Dev-only Swagger bypass — loads a real user so requirePermission also works
+    // Dev-only Swagger bypass. Loads a real user so requirePermission also works.
     if (
       process.env.VITE_ENV !== 'production' &&
       req.headers['x-swagger-token'] === process.env.SWAGGER_TOKEN
     ) {
-      const { sql, bindings } = SQL.model(Master.Users)
-        .select([
-          { col: Master.Users.cols.id, as: 'id' },
-          { col: Master.Users.cols.username, as: 'username' },
-          { col: Master.Users.cols.first_name, as: 'firstName' },
-          { col: Master.Users.cols.last_name, as: 'lastName' },
-          { col: Master.Users.cols.branch_id, as: 'branchId' },
-          { col: Master.Users.cols.role_id, as: 'roleId' },
-          { col: Master.Role.cols.role_name, as: 'roleName' },
-        ])
+      const { sql, bindings } = USER_COLUMNS(SQL.model(Master.Users))
         .join(Master.Role.table, Master.Users.cols.role_id, Master.Role.pk)
         .where(Master.Users.cols.username, process.env.SWAGGER_USER || 'admin')
         .where(Master.Users.cols.isActive, true)
@@ -91,31 +134,18 @@ const auth = async (req, res, next) => {
       return handleUnauthorized(req, res)
     }
 
-    const { sql, bindings } = SQL.model(Master.Users)
-      .select([
-        { col: Master.Users.cols.id, as: 'id' },
-        { col: Master.Users.cols.username, as: 'username' },
-        { col: Master.Users.cols.first_name, as: 'firstName' },
-        { col: Master.Users.cols.last_name, as: 'lastName' },
-        { col: Master.Users.cols.branch_id, as: 'branchId' },
-        { col: Master.Users.cols.role_id, as: 'roleId' },
-        { col: Master.Role.cols.role_name, as: 'roleName' },
-      ])
-      .join(Master.Role.table, Master.Users.cols.role_id, Master.Role.pk)
-      .where(Master.Users.pk, userId)
-      .where(Master.Users.cols.isActive, true)
-      .limit(1)
-      .build()
-
-    const [result] = await Query(sql, bindings)
-
-    if (!result) {
-      req.session?.destroy?.(() => {})
-      res.clearCookie(SESSION_COOKIE_NAME, COOKIE_BASE)
-      return handleUnauthorized(req, res, 'Your account is no longer active.')
+    let user = getCachedUser(userId)
+    if (!user) {
+      user = await loadUserById(userId)
+      if (!user) {
+        req.session?.destroy?.(() => {})
+        res.clearCookie(SESSION_COOKIE_NAME, COOKIE_BASE)
+        return handleUnauthorized(req, res, 'Your account is no longer active.')
+      }
+      setCachedUser(userId, user)
     }
 
-    req.user = result
+    req.user = user
     return next()
   } catch (err) {
     logger.error('Authentication check failed', err)
@@ -125,7 +155,7 @@ const auth = async (req, res, next) => {
 
 /**
  * @name requireRole
- * @description Hard gate by role name. Admins bypass all role checks automatically.
+ * @description Hard gate by role name. Admin roles bypass the check.
  */
 const requireRole =
   (...allowedRoles) =>
@@ -136,7 +166,7 @@ const requireRole =
       return handleUnauthorized(req, res)
     }
 
-    if (roleName === 'Admin' || allowedRoles.includes(roleName)) {
+    if (isSuperRole(roleName) || allowedRoles.includes(roleName)) {
       return next()
     }
 
@@ -146,7 +176,7 @@ const requireRole =
 
 /**
  * @name requirePermission
- * @description Checks one module/action pair against permissions. Admins bypass permission checks automatically.
+ * @description Checks one module/action pair against the role's matrix. Admin roles bypass it.
  */
 const requirePermission = (moduleKey, action) => async (req, res, next) => {
   try {
@@ -157,7 +187,7 @@ const requirePermission = (moduleKey, action) => async (req, res, next) => {
       return handleUnauthorized(req, res)
     }
 
-    if (roleName === 'Admin') {
+    if (isSuperRole(roleName)) {
       return next()
     }
 
@@ -202,4 +232,6 @@ module.exports = {
   otpLimiter,
   handleUnauthorized,
   handleForbidden,
+  // Exported so sign-out can drop the cached row immediately
+  clearCachedUser: (userId) => userCache.delete(String(userId)),
 }

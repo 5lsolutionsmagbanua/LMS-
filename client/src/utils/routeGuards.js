@@ -7,6 +7,13 @@ export const requireRoleAccess = (context, path) => {
   const permissions = context?.permissions
   const isLoading = context?.isLoading
 
+  console.log('[guard]', {
+    path,
+    roles: getUserRoles(user),
+    permissions,
+    allowed: hasRoutePermission(getUserRoles(user)[0], permissions, path),
+  })
+
   // 🔑 Auth state hasn't resolved yet — don't judge permissions against
   // an empty/placeholder context. Let the route render; main.jsx now
   // withholds RouterProvider until isLoading is false, so in practice

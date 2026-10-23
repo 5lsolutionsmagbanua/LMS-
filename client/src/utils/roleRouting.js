@@ -12,6 +12,7 @@ export function getUserRoles(user) {
       if (typeof r === 'string') return r.toLowerCase().trim()
       if (typeof r === 'object' && r !== null) {
         return (r.name || r.roleName || r.slug || '').toLowerCase().trim()
+        
       }
       return ''
     })

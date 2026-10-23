@@ -1,120 +1,59 @@
 'use strict'
 
-const { v4: uuidv4 } = require('uuid')
-const { ROLES, ROLE_LIST } = require('../constants/roles')
-const { MODULE_LIST, DEFAULT_PERMISSIONS } = require('../constants/permissions')
+// Adds permission rows for the new vehicles / vehicle_types modules WITHOUT
+// touching existing rows. Do not re-run the full permissions seeder for this:
+// it deletes and recreates every row for all seeded roles, which would wipe
+// any changes made through Access Control.
+//
+// Make sure both keys are also in server constants/permissions.js
+// (MODULE_LIST + each role in DEFAULT_PERMISSIONS) and client permissionCatalog.js.
 
-const DESCRIPTIONS = {
-  [ROLES.ADMIN]: 'Full access to every module, including users, roles, and permissions.',
-  [ROLES.MANAGER]: 'Runs branches, stores, and stock requests. No access to user administration.',
-  [ROLES.DRIVER]: 'Views assigned stock requests only.',
-  [ROLES.DEVELOPER]: 'Full system access for debugging, API testing, and technical maintenance.',
-  [ROLES.PRESIDENT]: 'Full system access for debugging, API testing, and technical maintenance.',
-}
+const { v4: uuidv4 } = require('uuid')
+const { DEFAULT_PERMISSIONS } = require('../constants/permissions')
+
+const NEW_MODULES = ['vehicles', 'vehicle_types']
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
     const now = new Date()
 
-    // 1. Make sure the system roles exist, and collect their IDs.
-    const [existingRoles] = await queryInterface.sequelize.query(
+    const [roles] = await queryInterface.sequelize.query(
       'SELECT mr_id, mr_role_name FROM master_role',
     )
 
-    const roleIdByName = {}
-    existingRoles.forEach((row) => {
-      roleIdByName[row.mr_role_name] = row.mr_id
-    })
-
-    const rolesToInsert = []
-    ROLE_LIST.forEach((roleName) => {
-      if (roleIdByName[roleName]) return
-
-      const id = uuidv4()
-      roleIdByName[roleName] = id
-      rolesToInsert.push({
-        mr_id: id,
-        mr_role_name: roleName,
-        mr_description: DESCRIPTIONS[roleName],
-        mr_is_active: true,
-        mr_createdAt: now,
-        mr_updatedAt: now,
-      })
-    })
-
-    if (rolesToInsert.length) {
-      await queryInterface.bulkInsert('master_role', rolesToInsert)
-    }
-
-    // Refresh roleIdByName map to guarantee new IDs are captured
-    const [updatedRoles] = await queryInterface.sequelize.query(
-      'SELECT mr_id, mr_role_name FROM master_role',
+    const [existing] = await queryInterface.sequelize.query(
+      'SELECT mp_role_id, mp_module FROM master_permission WHERE mp_module IN (:mods)',
+      { replacements: { mods: NEW_MODULES } },
     )
-    updatedRoles.forEach((row) => {
-      roleIdByName[row.mr_role_name] = row.mr_id
-    })
+    const have = new Set(existing.map((r) => `${r.mp_role_id}:${r.mp_module}`))
 
-    // 2. Clear any existing permission rows for these roles only
-    const seededRoleIds = ROLE_LIST.map((name) => roleIdByName[name]).filter(Boolean)
-
-    if (seededRoleIds.length) {
-      await queryInterface.bulkDelete('master_permission', {
-        mp_role_id: { [Sequelize.Op.in]: seededRoleIds },
-      })
-    }
-
-    // 3. Write the default matrix.
-    const permissionRows = []
-
-    ROLE_LIST.forEach((roleName) => {
-      const roleId = roleIdByName[roleName]
-      if (!roleId) return
-
-      const roleDefaults = DEFAULT_PERMISSIONS[roleName]
-      if (!roleDefaults) {
-        console.warn(`Warning: No default permissions found for role: "${roleName}"`)
-        return
-      }
-
-      MODULE_LIST.forEach((moduleKey) => {
-        const flags = roleDefaults[moduleKey] || { read: false, write: false, update: false }
-
-        permissionRows.push({
+    const rows = []
+    roles.forEach((role) => {
+      const defaults = DEFAULT_PERMISSIONS[role.mr_role_name] || {}
+      NEW_MODULES.forEach((mod) => {
+        if (have.has(`${role.mr_id}:${mod}`)) return
+        const f = defaults[mod] || { read: false, write: false, update: false }
+        rows.push({
           mp_id: uuidv4(),
-          mp_role_id: roleId,
-          mp_module: moduleKey,
-          mp_can_read: Boolean(flags.read),
-          mp_can_write: Boolean(flags.write),
-          mp_can_update: Boolean(flags.update),
+          mp_role_id: role.mr_id,
+          mp_module: mod,
+          mp_can_read: Boolean(f.read),
+          mp_can_write: Boolean(f.write),
+          mp_can_update: Boolean(f.update),
           mp_createdAt: now,
           mp_updatedAt: now,
         })
       })
     })
 
-    if (permissionRows.length) {
-      await queryInterface.bulkInsert('master_permission', permissionRows)
-    }
-
-    console.log(
-      `Seeded ${rolesToInsert.length} role(s) and ${permissionRows.length} permission row(s).`,
-    )
+    if (rows.length) await queryInterface.bulkInsert('master_permission', rows)
+    console.log(`Added ${rows.length} permission row(s) for ${NEW_MODULES.join(', ')}.`)
   },
 
   async down(queryInterface, Sequelize) {
-    const [roles] = await queryInterface.sequelize.query(
-      'SELECT mr_id, mr_role_name FROM master_role',
-    )
-
-    const seededRoleIds = roles
-      .filter((row) => ROLE_LIST.includes(row.mr_role_name))
-      .map((row) => row.mr_id)
-
-    if (seededRoleIds.length) {
-      await queryInterface.bulkDelete('master_permission', {
-        mp_role_id: { [Sequelize.Op.in]: seededRoleIds },
-      })
-    }
+    await queryInterface.bulkDelete('master_permission', {
+      mp_module: { [Sequelize.Op.in]: NEW_MODULES },
+    })
   },
 }

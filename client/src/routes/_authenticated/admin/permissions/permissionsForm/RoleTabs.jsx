@@ -6,9 +6,9 @@
 export default function RoleTabs({ roles = [], activeRoleId, onChange, dirtyRoleIds = [] }) {
   if (!roles.length) {
     return (
-      <div className="rounded-xl border border-dashed border-slate-300 bg-white/80 px-4 py-6 text-center">
-        <p className="text-sm font-medium text-slate-600">No roles yet.</p>
-        <p className="mt-1 text-xs text-slate-400">
+      <div className="rounded-2xl border border-dashed border-slate-300 dark:border-white/15 bg-white/80 dark:bg-slate-900/40 px-4 py-6 text-center backdrop-blur-sm shadow-2xs">
+        <p className="text-sm font-medium text-slate-600 dark:text-slate-300">No roles yet.</p>
+        <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
           Add a role on the Roles screen, then come back to set its access.
         </p>
       </div>
@@ -18,8 +18,8 @@ export default function RoleTabs({ roles = [], activeRoleId, onChange, dirtyRole
   return (
     <div>
       <div className="mb-3 flex items-center gap-2">
-        <UserGroupIcon className="h-4 w-4 text-primary" />
-        <h2 className="text-sm font-semibold text-primary">Select a role</h2>
+        <UserGroupIcon className="h-4 w-4 text-[var(--theme-primary)]" />
+        <h2 className="text-sm font-semibold text-[var(--theme-primary)]">Select a role</h2>
       </div>
 
       <div className="flex flex-wrap gap-3">
@@ -33,16 +33,24 @@ export default function RoleTabs({ roles = [], activeRoleId, onChange, dirtyRole
               type="button"
               onClick={() => onChange?.(role.roleId)}
               aria-pressed={isActive}
-              className={`relative rounded-xl px-5 py-2.5 text-sm font-bold tracking-wide transition-all focus:outline-none focus:ring-2 focus:ring-primary/40 ${
+              style={
                 isActive
-                  ? 'bg-primary text-white shadow-sm shadow-primary/25'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200/70 hover:text-slate-900'
+                  ? {
+                      backgroundColor: 'var(--theme-primary)',
+                      color: 'var(--theme-on-primary)',
+                    }
+                  : undefined
+              }
+              className={`relative rounded-xl px-5 py-2.5 text-sm font-bold tracking-wide transition-all focus:outline-none focus:ring-2 focus:ring-[var(--theme-primary)]/40 cursor-pointer ${
+                isActive
+                  ? 'shadow-sm shadow-[var(--theme-primary)]/25'
+                  : 'bg-white dark:bg-slate-900/60 border border-slate-200/80 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               {role.roleName}
 
               {isActive && (
-                <span className="absolute -right-1.5 -top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500 ring-2 ring-white">
+                <span className="absolute -right-1.5 -top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500 ring-2 ring-white dark:ring-slate-900">
                   <CheckIcon className="h-2.5 w-2.5 text-white" />
                 </span>
               )}
@@ -50,7 +58,7 @@ export default function RoleTabs({ roles = [], activeRoleId, onChange, dirtyRole
               {isDirty && !isActive && (
                 <span
                   title="Unsaved changes"
-                  className="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full bg-amber-400 ring-2 ring-white"
+                  className="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full bg-amber-400 ring-2 ring-white dark:ring-slate-900"
                 />
               )}
             </button>

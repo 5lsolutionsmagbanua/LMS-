@@ -2,7 +2,7 @@
 import PermissionRow from './PermissionRow'
 
 /**
- * One module's permissions, in a card styled to adapt dynamically to the primary theme.
+ * One module's permissions, in a card styled with the liquify gradient header.
  */
 export default function ModuleCard({
   module,
@@ -13,12 +13,23 @@ export default function ModuleCard({
   onToggleAll,
 }) {
   return (
-    <div className="overflow-hidden rounded-xl border border-slate-200/80 bg-white shadow-sm">
-      <div className="flex items-center justify-between gap-3 bg-primary px-4 py-3">
+    <div className="overflow-hidden rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900/60 shadow-2xs backdrop-blur-sm">
+      {/* Liquify Gradient Header using your theme variables & btn-liquid-flow class */}
+      <div className="flex items-center justify-between gap-3 btn-liquid-flow px-4 py-3.5 border-b border-white/10 shadow-inner backdrop-blur-md">
         <div className="min-w-0">
-          <h3 className="truncate text-sm font-bold tracking-wide text-white">{module.label}</h3>
+          <h3
+            style={{ color: 'var(--theme-on-primary)' }}
+            className="truncate text-sm font-bold tracking-wide drop-shadow-2xs"
+          >
+            {module.label}
+          </h3>
           {module.blurb && (
-            <p className="mt-0.5 truncate text-[11px] text-white/80">{module.blurb}</p>
+            <p
+              style={{ color: 'color-mix(in srgb, var(--theme-on-primary) 80%, transparent)' }}
+              className="mt-0.5 truncate text-[11px]"
+            >
+              {module.blurb}
+            </p>
           )}
         </div>
 
@@ -26,7 +37,8 @@ export default function ModuleCard({
           <button
             type="button"
             onClick={() => onToggleAll?.(module.key, !allSelected)}
-            className="shrink-0 rounded-md bg-white px-2.5 py-1 text-[11px] font-bold tracking-wide text-primary transition-colors hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-white/60"
+            style={{ color: 'var(--theme-primary)' }}
+            className="shrink-0 rounded-lg bg-white/90 dark:bg-slate-900/90 px-2.5 py-1 text-[11px] font-bold tracking-wide transition-all hover:bg-white dark:hover:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-white/60 cursor-pointer shadow-2xs backdrop-blur-sm"
           >
             {allSelected ? 'Clear all' : 'Select all'}
           </button>

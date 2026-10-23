@@ -1,3 +1,4 @@
+// client/src/routes/_authenticated/admin/pending-requests/pendingRequestsForm/PendingRequestEditForm.jsx
 import { useMemo, useState, useEffect } from 'react'
 import { useMasterBranches } from '@/hooks/useMasterBranches'
 import { useMasterStores } from '@/hooks/useMasterStores'
@@ -101,7 +102,11 @@ export default function PendingRequestEditForm({ requestId, initialData, onUpdat
   }
 
   return (
-    <form onSubmit={handleSubmit} className="w-full space-y-6 text-slate-600 pb-2" noValidate>
+    <form
+      onSubmit={handleSubmit}
+      className="w-full space-y-6 text-slate-600 dark:text-slate-300 pb-2"
+      noValidate
+    >
       {updateRequest.isError && (
         <Alert variant="error" title="Update Failed" onDismiss={() => updateRequest.reset()}>
           {updateRequest.error?.response?.data?.message || 'Something went wrong'}
@@ -109,12 +114,12 @@ export default function PendingRequestEditForm({ requestId, initialData, onUpdat
       )}
 
       {/* Details Section Card */}
-      <div className="bg-slate-50/60 p-5 sm:p-6 rounded-2xl border border-slate-200/80 shadow-xs space-y-5">
-        <div className="border-b border-slate-200/60 pb-3 flex items-center justify-between">
-          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">
+      <div className="bg-slate-50/60 dark:bg-slate-900/40 p-5 sm:p-6 rounded-2xl border border-slate-200/80 dark:border-white/10 shadow-2xs space-y-5 backdrop-blur-sm">
+        <div className="border-b border-slate-200/60 dark:border-white/10 pb-3 flex items-center justify-between">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
             Edit Request Details
           </h3>
-          <span className="text-[11px] font-mono bg-white px-2.5 py-1 rounded-md border border-slate-200 text-slate-600 shadow-xs">
+          <span className="text-[11px] font-mono bg-white dark:bg-slate-800 px-2.5 py-1 rounded-md border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 shadow-2xs">
             REQUEST ID: {requestId}
           </span>
         </div>
@@ -200,35 +205,37 @@ export default function PendingRequestEditForm({ requestId, initialData, onUpdat
       </div>
 
       {/* Line Items Section Card */}
-      <div className="bg-slate-50/60 p-5 sm:p-6 rounded-2xl border border-slate-200/80 shadow-xs space-y-4">
-        <div className="flex items-center justify-between border-b border-slate-200/60 pb-3">
+      <div className="bg-slate-50/60 dark:bg-slate-900/40 p-5 sm:p-6 rounded-2xl border border-slate-200/80 dark:border-white/10 shadow-2xs space-y-4 backdrop-blur-sm">
+        <div className="flex items-center justify-between border-b border-slate-200/60 dark:border-white/10 pb-3">
           <div className="flex items-center gap-2">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
               Request Line Items
             </h3>
-            <span className="bg-[#E31837]/10 text-[#E31837] px-2 py-0.5 rounded-full text-xs font-bold">
+            <span className="bg-primary/10 text-primary px-2 py-0.5 rounded-full text-xs font-bold">
               {items.length}
             </span>
           </div>
           <button
             type="button"
             onClick={addItem}
-            className="inline-flex items-center gap-1 text-xs font-semibold bg-white text-[#E31837] border border-slate-200 hover:bg-slate-50 px-3 py-1.5 rounded-xl shadow-xs transition-all cursor-pointer"
+            className="inline-flex items-center gap-1 text-xs font-semibold bg-white dark:bg-slate-800 text-primary border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-slate-700 px-3 py-1.5 rounded-xl shadow-2xs transition-all cursor-pointer"
           >
             <span className="text-sm font-bold leading-none">+</span> Add Line Item
           </button>
         </div>
 
         {items.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-slate-300 bg-white/80 px-4 py-8 text-center">
-            <p className="text-sm font-medium text-slate-600">
+          <div className="rounded-2xl border border-dashed border-slate-300 dark:border-white/15 bg-white/80 dark:bg-slate-900/40 px-4 py-8 text-center backdrop-blur-sm">
+            <p className="text-sm font-medium text-slate-600 dark:text-slate-300">
               No items attached to this request yet.
             </p>
-            <p className="text-xs text-slate-400 mt-1">
+            <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
               Click &quot;+ Add Line Item&quot; above to get started.
             </p>
             {errors.items && (
-              <p className="mt-2 text-xs font-semibold text-rose-600">{errors.items}</p>
+              <p className="mt-2 text-xs font-semibold text-rose-600 dark:text-rose-400">
+                {errors.items}
+              </p>
             )}
           </div>
         ) : (
@@ -248,8 +255,13 @@ export default function PendingRequestEditForm({ requestId, initialData, onUpdat
       </div>
 
       {/* Form Footer Action */}
-      <div className="flex justify-end gap-3 pt-4 border-t border-slate-200/80">
-        <Button type="submit" loading={updateRequest.isPending} className="w-full sm:w-auto">
+      <div className="flex justify-end gap-3 pt-4 border-t border-slate-200/80 dark:border-white/10">
+        <Button
+          type="submit"
+          variant="liquid"
+          loading={updateRequest.isPending}
+          className="w-full sm:w-auto min-w-[140px]"
+        >
           Save Changes
         </Button>
       </div>
@@ -259,16 +271,18 @@ export default function PendingRequestEditForm({ requestId, initialData, onUpdat
 
 const Field = ({ label, required, error, className = '', children }) => (
   <div className={className}>
-    <label className="mb-1.5 flex items-baseline gap-1 text-xs font-semibold uppercase tracking-wide text-slate-600">
+    <label className="mb-1.5 flex items-baseline gap-1 text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400">
       {label}
       {required && <span className="text-rose-500">*</span>}
     </label>
     {children}
-    {error && <p className="mt-1.5 text-xs font-medium text-rose-600">{error}</p>}
+    {error && (
+      <p className="mt-1.5 text-xs font-medium text-rose-600 dark:text-rose-400">{error}</p>
+    )}
   </div>
 )
 
 const inputClass = (error) =>
-  `w-full rounded-xl border bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#E31837]/20 focus:border-[#E31837] transition-all shadow-xs ${
-    error ? 'border-rose-500 bg-rose-50/10' : 'border-slate-200/90'
+  `w-full rounded-xl border bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-2xs dark:bg-slate-900/50 dark:text-slate-100 dark:border-white/10 dark:placeholder:text-slate-500 dark:[&>option]:bg-slate-900 dark:[&>option]:text-white ${
+    error ? 'border-rose-500 bg-rose-50/10 dark:bg-rose-950/20' : 'border-slate-200/90'
   }`

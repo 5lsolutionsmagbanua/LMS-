@@ -73,6 +73,16 @@ export const PERMISSION_MODULES = [
     ],
   },
   {
+    key: 'dispatch',
+    label: 'Dispatch',
+    blurb: 'Driver and vehicle assignment for approved requests.',
+    permissions: [
+      { action: 'read', description: 'View dispatch assignments' },
+      { action: 'write', description: 'Assign a driver and vehicle' },
+      { action: 'update', description: 'Update dispatch progress' },
+    ],
+  },
+  {
     key: 'vehicles',
     label: 'Vehicles',
     blurb: 'Fleet vehicles and their details.',
@@ -92,7 +102,15 @@ export const PERMISSION_MODULES = [
       { action: 'update', description: 'Edit a vehicle type' },
     ],
   },
-  // client permissionCatalog.js, add to PERMISSION_MODULES
+  {
+    key: 'live_map',
+    label: 'Live Map',
+    blurb: 'See staff locations on the live map.',
+    permissions: [
+      { action: 'read', description: 'View the live map' },
+      { action: 'write', description: 'Share own location' },
+    ],
+  },
   {
     key: 'access_control',
     label: 'Access Control',

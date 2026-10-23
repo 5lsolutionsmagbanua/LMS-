@@ -1,4 +1,6 @@
+// client/src/context/AuthContext.jsx
 import { createContext, useEffect, useState, useCallback } from 'react'
+import { flushSync } from 'react-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { apiClient } from '../api/axios'
 import { useMyPermissions } from '../hooks/useMasterPermissions'
@@ -21,10 +23,12 @@ export function AuthProvider({ children }) {
   const fetchSession = useCallback(async () => {
     try {
       const { data } = await apiClient.get('/auth/me')
-      setUser(data)
+      // Commit the user to React before returning, so route guards that run
+      // right after login (router.invalidate + navigate) never see stale state.
+      flushSync(() => setUser(data))
       return data // return the user so callers can use it immediately
     } catch {
-      setUser(null)
+      flushSync(() => setUser(null))
       return null
     } finally {
       setSessionLoading(false)
@@ -38,14 +42,13 @@ export function AuthProvider({ children }) {
   const logout = useCallback(async () => {
     try {
       await apiClient.post('/auth/logout')
-    } catch (err) {
-      console.error('Logout request failed', err)
-    } finally {
-      setUser(null)
-      queryClient.clear()
+    } catch {
+      /* the session may already be gone; still clear local state below */
     }
+    queryClient.clear()
+    setUser(null)
+    setPermissions([])
   }, [queryClient])
-
   return (
     <AuthContext.Provider value={{ user, permissions, isLoading, logout, refetch: fetchSession }}>
       {children}

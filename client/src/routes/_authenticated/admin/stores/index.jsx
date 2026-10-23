@@ -1,17 +1,17 @@
 // client/src/routes/_authenticated/admin/stores/index.jsx
 import { createFileRoute } from '@tanstack/react-router'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { useMasterStores } from '@/hooks/useMasterStores'
-import { usePermissionCheck } from '@/hooks/usePermissionCheck'
-import Button from '@/components/ui/Button'
-import Modal from '@/components/ui/Modal'
-import ActionButtons from '@/components/ui/ActionButtons'
-import EditLink from '@/components/ui/EditLink'
-import SearchBar from '@/components/ui/SearchBar'
-import Pagination from '@/components/ui/Pagination'
-import Table from '@/components/ui/Table'
+import { useMasterStores } from '../../../../hooks/useMasterStores'
+import { usePermissionCheck } from '../../../../hooks/usePermissionCheck'
+import Button from '../../../../components/ui/Button'
+import Modal from '../../../../components/ui/Modal'
+import ActionButtons from '../../../../components/ui/ActionButtons'
+import EditLink from '../../../../components/ui/EditLink'
+import SearchBar from '../../../../components/ui/SearchBar'
+import Pagination from '../../../../components/ui/Pagination'
+import Table from '../../../../components/ui/Table'
 import StoreForm from './storesForm/StoreForm'
-import Alert from '@/components/ui/Alert'
+import Alert from '../../../../components/ui/Alert'
 
 export const Route = createFileRoute('/_authenticated/admin/stores/')({
   component: StoresRoute,
@@ -91,30 +91,41 @@ function StoresRoute() {
       label: 'Store ID',
       sortable: true,
       truncate: true,
+      render: (row) => (
+        <span className="font-mono text-xs text-slate-500 dark:text-slate-400">{row.id}</span>
+      ),
     },
     {
       key: 'store_name',
       label: 'Store Name',
       sortable: true,
-      render: (row) => <span className="font-medium text-slate-900">{row.store_name}</span>,
+      render: (row) => (
+        <span className="font-medium text-slate-900 dark:text-slate-100">{row.store_name}</span>
+      ),
     },
     {
       key: 'store_code',
       label: 'Store Code',
       sortable: true,
-      render: (row) => <span className="text-slate-600 font-semibold">{row.store_code}</span>,
+      render: (row) => (
+        <span className="text-slate-600 dark:text-slate-300 font-semibold">{row.store_code}</span>
+      ),
     },
     {
       key: 'contact_person',
       label: 'Contact Person',
       sortable: true,
-      render: (row) => <span className="text-slate-600">{row.contact_person || '—'}</span>,
+      render: (row) => (
+        <span className="text-slate-600 dark:text-slate-400">{row.contact_person || '—'}</span>
+      ),
     },
     {
       key: 'contact_number',
       label: 'Contact Number',
       sortable: true,
-      render: (row) => <span className="text-slate-600">{row.contact_number || '—'}</span>,
+      render: (row) => (
+        <span className="text-slate-600 dark:text-slate-400">{row.contact_number || '—'}</span>
+      ),
     },
     {
       key: 'is_active',
@@ -124,8 +135,8 @@ function StoresRoute() {
         <span
           className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${
             row.is_active === 1 || row.is_active === true
-              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/60'
-              : 'bg-slate-100 text-slate-600 border border-slate-200'
+              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/60 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800/50'
+              : 'bg-slate-100 text-slate-600 border border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700'
           }`}
         >
           {row.is_active === 1 || row.is_active === true ? 'Active' : 'Inactive'}
@@ -144,53 +155,41 @@ function StoresRoute() {
 
   return (
     <div className="w-full pb-12 space-y-4">
-      {successMessage && (
-        <Alert variant="success" title="Success" onDismiss={() => setSuccessMessage(null)}>
-          {successMessage}
-        </Alert>
-      )}
+      {/* Outer Container with Thicker Theme-Adaptive Border */}
+      <div className="bg-slate-50/60 dark:bg-slate-900/40 border-2 border-primary/20 dark:border-primary/30 rounded-2xl p-4 sm:p-6 shadow-2xs space-y-6 w-full backdrop-blur-sm transition-colors">
+        {successMessage && (
+          <Alert variant="success" title="Success" onDismiss={() => setSuccessMessage(null)}>
+            {successMessage}
+          </Alert>
+        )}
 
-      {/* Professional Outer Container Border */}
-      <div className="bg-slate-50/50 border border-slate-200/80 rounded-2xl p-4 sm:p-6 shadow-xs space-y-6 w-full">
-        {/* Header Section */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-6 rounded-xl border border-slate-100 shadow-xs">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900">Store Management</h1>
-            <p className="text-sm text-slate-500 mt-0.5">
-              {/* Manage stock-holding locations and their contact details. */}
-            </p>
-          </div>
+        {/* Unified Liquify Gradient Header Card */}
+        <div className="bg-gradient-to-r from-primary via-primary/90 to-primary/80 p-6 rounded-xl border border-white/10 shadow-md backdrop-blur-md text-on-primary">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight h1 drop-shadow-2xs">
+                Store Management
+              </h1>
+              <p className="text-sm opacity-75 mt-0.5">
+                Manage stock-holding locations and their contact details.
+              </p>
+            </div>
 
-          {can('stores', 'write') && (
-            <Button
-              variant="primary"
-              size="md"
-              icon={<span className="text-lg leading-none">+</span>}
-              onClick={handleOpenCreate}
-            >
-              Add New Store
-            </Button>
-          )}
-        </div>
-
-        {/* Toolbar / Search Section */}
-        <div className="bg-white p-4 rounded-xl border border-slate-100 shadow-xs flex items-center justify-between gap-4">
-          <div className="w-full md:w-96">
-            <SearchBar
-              value={search}
-              onSearch={handleSearch}
-              onChange={handleSearch}
-              placeholder="Search by ID, name, code..."
-            />
-          </div>
-          <div className="hidden md:block text-xs font-medium text-slate-400 pr-2">
-            Total Stores:{' '}
-            <span className="text-slate-700 font-semibold">{filteredStores.length}</span>
+            {can('stores', 'write') && (
+              <Button
+                variant="liquid"
+                size="md"
+                icon={<span className="text-lg leading-none">+</span>}
+                onClick={handleOpenCreate}
+              >
+                Add New Store
+              </Button>
+            )}
           </div>
         </div>
 
-        {/* Data Table Card Container */}
-        <div className="bg-white rounded-xl border border-slate-100 shadow-xs overflow-hidden w-full">
+        {/* Data Table Card Container with Thicker Theme-Adaptive Border */}
+        <div className="bg-white dark:bg-slate-900/60 rounded-xl border-2 border-primary/20 dark:border-primary/30 shadow-2xs overflow-hidden w-full transition-colors">
           <Table
             columns={columns}
             rows={paginatedStores}
@@ -200,7 +199,24 @@ function StoresRoute() {
             minRows={pageSize}
           />
 
-          <div className="p-4 border-t border-slate-100 bg-slate-50/50">
+          {/* Merged Footer: Search Bar, Total Stores & Pagination in a Row */}
+          <div className="p-4 border-t-2 border-primary/20 dark:border-primary/30 bg-slate-50/50 dark:bg-slate-900/40 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-4 w-full sm:w-auto">
+              <div className="w-full sm:w-72">
+                <SearchBar
+                  value={search}
+                  onSearch={handleSearch}
+                  placeholder="Search by ID, name, code..."
+                />
+              </div>
+              <div className="text-xs font-medium text-slate-500 dark:text-slate-400 whitespace-nowrap hidden sm:block">
+                Total Stores:{' '}
+                <span className="font-semibold text-slate-700 dark:text-slate-200">
+                  {filteredStores.length}
+                </span>
+              </div>
+            </div>
+
             <Pagination
               page={page}
               totalItems={filteredStores.length}

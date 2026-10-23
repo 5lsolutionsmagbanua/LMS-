@@ -1,4 +1,4 @@
-// routes/_authenticated/authenticated/developer/pending-requests/pendingRequestsForm/-RequestItemRow.jsx
+// client/src/routes/_authenticated/admin/pending-requests/pendingRequestsForm/RequestItemRow.jsx
 /**
  * One line item within the request. Serialized items (individually tracked
  * assets) ask for a serial number and lock quantity to 1; bulk stock asks
@@ -29,22 +29,22 @@ export default function RequestItemRow({
   }
 
   return (
-    <div className="rounded-2xl border border-slate-200/80 bg-white shadow-2xs overflow-hidden transition-all">
-      <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50/50 px-4 py-2.5">
+    <div className="rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900/60 shadow-2xs overflow-hidden transition-all backdrop-blur-sm">
+      <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/10 bg-slate-50/50 dark:bg-slate-900/40 px-4 py-2.5">
         <div className="flex items-center gap-2.5">
           <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
             {index + 1}
           </span>
-          <label className="flex items-center gap-2 text-xs font-semibold text-slate-600 cursor-pointer">
+          <label className="flex items-center gap-2 text-xs font-semibold text-slate-600 dark:text-slate-300 cursor-pointer">
             <input
               type="checkbox"
               checked={item.isSerialized}
               onChange={handleSerializedToggle}
-              className="h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary/20 accent-primary"
+              className="h-4 w-4 rounded border-slate-300 dark:border-white/20 text-primary focus:ring-primary/20 accent-primary"
             />
             Serialized item
             {item.isSerialized && (
-              <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold bg-purple-50 text-purple-700 border border-purple-100">
+              <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold bg-purple-50 text-purple-700 border border-purple-100 dark:bg-purple-950/40 dark:text-purple-400 dark:border-purple-800/50">
                 Tracked by serial
               </span>
             )}
@@ -53,7 +53,7 @@ export default function RequestItemRow({
         <button
           type="button"
           onClick={onRemove}
-          className="text-xs font-semibold text-slate-400 transition-colors hover:text-rose-600 cursor-pointer"
+          className="text-xs font-semibold text-slate-400 dark:text-slate-500 transition-colors hover:text-rose-600 dark:hover:text-rose-400 cursor-pointer"
         >
           Remove
         </button>
@@ -87,7 +87,7 @@ export default function RequestItemRow({
             />
           )}
           {errors.stockId && (
-            <p className="mt-1 text-xs font-medium text-rose-600">{errors.stockId}</p>
+            <p className="mt-1 text-xs font-medium text-rose-600 dark:text-rose-400">{errors.stockId}</p>
           )}
         </div>
 
@@ -101,7 +101,7 @@ export default function RequestItemRow({
             className={inputClass(errors.assetTag)}
           />
           {errors.assetTag && (
-            <p className="mt-1 text-xs font-medium text-rose-600">{errors.assetTag}</p>
+            <p className="mt-1 text-xs font-medium text-rose-600 dark:text-rose-400">{errors.assetTag}</p>
           )}
         </div>
 
@@ -118,7 +118,7 @@ export default function RequestItemRow({
               className={inputClass(errors.serialNumber)}
             />
             {errors.serialNumber && (
-              <p className="mt-1 text-xs font-medium text-rose-600">{errors.serialNumber}</p>
+              <p className="mt-1 text-xs font-medium text-rose-600 dark:text-rose-400">{errors.serialNumber}</p>
             )}
           </div>
         ) : (
@@ -134,7 +134,7 @@ export default function RequestItemRow({
               className={inputClass(errors.stockQty)}
             />
             {errors.stockQty && (
-              <p className="mt-1 text-xs font-medium text-rose-600">{errors.stockQty}</p>
+              <p className="mt-1 text-xs font-medium text-rose-600 dark:text-rose-400">{errors.stockQty}</p>
             )}
           </div>
         )}
@@ -144,9 +144,9 @@ export default function RequestItemRow({
 }
 
 const labelClass =
-  'mb-1.5 flex items-baseline gap-1 text-xs font-semibold uppercase tracking-wide text-slate-600'
+  'mb-1.5 flex items-baseline gap-1 text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400'
 
 const inputClass = (error) =>
-  `w-full rounded-xl border bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-2xs ${
-    error ? 'border-rose-500 bg-rose-50/10' : 'border-slate-200/90'
+  `w-full rounded-xl border bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-2xs dark:bg-slate-900/50 dark:text-slate-100 dark:border-white/10 dark:placeholder:text-slate-500 dark:[&>option]:bg-slate-900 dark:[&>option]:text-white ${
+    error ? 'border-rose-500 bg-rose-50/10 dark:bg-rose-950/20' : 'border-slate-200/90'
   }`

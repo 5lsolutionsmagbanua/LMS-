@@ -1,21 +1,30 @@
+// client/src/constants/pendingRequest.js
+
 /**
- * ⚠️ ASSUMPTION: these mirror what's likely in
- * server/src/database/constants/requestStatus.js, but that file's content
- * wasn't available when this was written. Replace REQUEST_STATUSES with the
- * real values from that file before shipping.
+ * Every status a request can be in. These match the server transition map
+ * and the badge styles on the Stock Requests page:
+ * pending -> confirmed -> ready_for_dispatch -> dispatched (or failed / cancelled).
+ * Use this for display and filtering.
  */
 export const REQUEST_STATUSES = [
   { value: 'pending', label: 'Pending' },
-  { value: 'approved', label: 'Approved' },
-  { value: 'rejected', label: 'Rejected' },
+  { value: 'confirmed', label: 'Confirmed' },
+  { value: 'ready_for_dispatch', label: 'Ready for dispatch' },
   { value: 'dispatched', label: 'Dispatched' },
-  { value: 'completed', label: 'Completed' },
+  { value: 'failed', label: 'Failed' },
   { value: 'cancelled', label: 'Cancelled' },
 ]
 
 /**
- * ⚠️ ASSUMPTION: no requestType constants existed anywhere in the provided
- * structure. These are placeholders — swap in your real request types.
+ * Statuses a user may pick in the create / edit forms. Later statuses are
+ * reached through the approval and dispatch flow, not by hand-editing.
+ */
+export const EDITABLE_REQUEST_STATUSES = REQUEST_STATUSES.filter((s) =>
+  ['pending', 'confirmed'].includes(s.value),
+)
+
+/**
+ * ⚠️ ASSUMPTION: placeholders — swap in your real request types.
  */
 export const REQUEST_TYPES = [
   { value: 'new-deployment', label: 'New deployment' },
@@ -25,7 +34,7 @@ export const REQUEST_TYPES = [
   { value: 'decommission', label: 'Decommission' },
 ]
 
-export const DEFAULT_STATUS = REQUEST_STATUSES[0].value
+export const DEFAULT_STATUS = 'pending'
 
 export const emptyItem = () => ({
   _key: crypto.randomUUID(),

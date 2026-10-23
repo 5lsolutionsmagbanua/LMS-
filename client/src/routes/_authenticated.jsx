@@ -1,14 +1,10 @@
-// src/routes/_authenticated.jsx
 import { createFileRoute, Outlet, redirect } from '@tanstack/react-router'
+import LiveLocationSharePrompt from '../components/layout/LiveLocationSharePrompt'
+import { useAuthContext } from '../hooks/useAuth'
+import { useLiveLocationHeartbeat } from '../hooks/useLiveLocationHeartbeat'
 
 export const Route = createFileRoute('/_authenticated')({
   beforeLoad: ({ context, location }) => {
-    console.log('[_authenticated beforeLoad]', {
-      isLoading: context.isLoading,
-      user: context.user,
-      path: location.pathname,
-    })
-
     if (context.isLoading) return
     if (!context.user) {
       throw redirect({
@@ -21,5 +17,13 @@ export const Route = createFileRoute('/_authenticated')({
 })
 
 function AuthenticatedLayout() {
-  return <Outlet />
+  const { user } = useAuthContext()
+  useLiveLocationHeartbeat(Boolean(user))
+
+  return (
+    <>
+      <Outlet />
+      <LiveLocationSharePrompt />
+    </>
+  )
 }

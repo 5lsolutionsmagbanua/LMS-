@@ -1,27 +1,18 @@
 // client/src/routes/_authenticated/admin/vehicles/index.jsx
 import { createFileRoute } from '@tanstack/react-router'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import Button from '@/components/ui/Button'
-import Modal from '@/components/ui/Modal'
-import ActionButtons from '@/components/ui/ActionButtons'
-import EditLink from '@/components/ui/EditLink'
-import SearchBar from '@/components/ui/SearchBar'
-import Pagination from '@/components/ui/Pagination'
-import Table from '@/components/ui/Table'
+import Button from '../../../../components/ui/Button'
+import Modal from '../../../../components/ui/Modal'
+import ActionButtons from '../../../../components/ui/ActionButtons'
+import EditLink from '../../../../components/ui/EditLink'
+import SearchBar from '../../../../components/ui/SearchBar'
+import Pagination from '../../../../components/ui/Pagination'
+import Table from '../../../../components/ui/Table'
 import VehicleCreateForm from './vehiclesForm/vehicleCreateForm'
 import VehicleEditForm from './vehiclesForm/vehicleEditForm'
-import { useMasterVehicles } from '@/hooks/useMasterVehicles'
-import { usePermissionCheck } from '@/hooks/usePermissionCheck'
-import {
-  Truck,
-  Plus,
-  CheckCircle2,
-  Clock,
-  Wrench,
-  SlidersHorizontal,
-  Car,
-  AlertCircle,
-} from 'lucide-react'
+import { useMasterVehicles } from '../../../../hooks/useMasterVehicles'
+import { usePermissionCheck } from '../../../../hooks/usePermissionCheck'
+import { Car, CheckCircle2, Clock, Wrench, AlertCircle } from 'lucide-react'
 
 export const Route = createFileRoute('/_authenticated/admin/vehicles/')({
   component: VehiclesRoute,
@@ -38,7 +29,6 @@ function VehiclesRoute() {
   const [page, setPage] = useState(1)
   const pageSize = 5
 
-  // Map raw data safely
   const vehicles = useMemo(() => {
     if (!rawVehicles) return []
     return rawVehicles.map((item) => ({
@@ -61,27 +51,15 @@ function VehiclesRoute() {
     }))
   }, [rawVehicles])
 
-  // Computed summary counts for quick filters
-  const stats = useMemo(() => {
-    const total = vehicles.length
-    const available = vehicles.filter((v) => v.status === 'Available').length
-    const inUse = vehicles.filter((v) => v.status === 'In Use').length
-    const maintenance = vehicles.filter((v) => v.status === 'Maintenance').length
-    return { total, available, inUse, maintenance }
-  }, [vehicles])
-
-  // Filter by search query & status filter tab
   const filteredVehicles = useMemo(() => {
     if (!vehicles) return []
 
     let result = vehicles
 
-    // Status filter
     if (statusFilter !== 'ALL') {
       result = result.filter((v) => v.status === statusFilter)
     }
 
-    // Search query filter
     const q = search.trim().toLowerCase()
     if (q) {
       result = result.filter((v) =>
@@ -122,11 +100,11 @@ function VehiclesRoute() {
       sortable: true,
       render: (row) => (
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-slate-100 border border-slate-200/80 flex items-center justify-center text-slate-600 shadow-2xs">
+          <div className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200/80 dark:border-white/10 flex items-center justify-center text-slate-600 dark:text-slate-300 shadow-2xs">
             <Car className="w-4 h-4" />
           </div>
           <div>
-            <span className="font-bold font-mono tracking-wide text-slate-900">
+            <span className="font-bold font-mono tracking-wide text-slate-900 dark:text-slate-100">
               {row.plate_number}
             </span>
             {row.color && <p className="text-xs text-slate-400 capitalize">{row.color}</p>}
@@ -140,9 +118,11 @@ function VehiclesRoute() {
       sortable: true,
       render: (row) => (
         <div>
-          <span className="font-medium text-slate-800">{row.brand || '—'}</span>
+          <span className="font-medium text-slate-800 dark:text-slate-200">{row.brand || '—'}</span>
           {row.model && (
-            <span className="text-slate-500 text-sm ml-1.5 font-normal">/ {row.model}</span>
+            <span className="text-slate-500 dark:text-slate-400 text-sm ml-1.5 font-normal">
+              / {row.model}
+            </span>
           )}
         </div>
       ),
@@ -152,7 +132,7 @@ function VehiclesRoute() {
       label: 'Capacity',
       sortable: true,
       render: (row) => (
-        <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 text-xs font-medium">
+        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-medium border border-slate-200/60 dark:border-white/10">
           {row.capacity ? `${row.capacity} Seats` : '—'}
         </span>
       ),
@@ -164,24 +144,28 @@ function VehiclesRoute() {
       render: (row) => {
         const statusConfig = {
           Available: {
-            badge: 'bg-emerald-50 text-emerald-700 border-emerald-200/80',
+            badge:
+              'bg-emerald-50 text-emerald-700 border-emerald-200/80 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800/50',
             dot: 'bg-emerald-500',
             icon: CheckCircle2,
           },
           'In Use': {
-            badge: 'bg-blue-50 text-blue-700 border-blue-200/80',
+            badge:
+              'bg-blue-50 text-blue-700 border-blue-200/80 dark:bg-blue-950/40 dark:text-blue-400 dark:border-blue-800/50',
             dot: 'bg-blue-500',
             icon: Clock,
           },
           Maintenance: {
-            badge: 'bg-amber-50 text-amber-700 border-amber-200/80',
+            badge:
+              'bg-amber-50 text-amber-700 border-amber-200/80 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-800/50',
             dot: 'bg-amber-500',
             icon: Wrench,
           },
         }
 
         const config = statusConfig[row.status] || {
-          badge: 'bg-slate-100 text-slate-600 border-slate-200',
+          badge:
+            'bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700',
           dot: 'bg-slate-400',
           icon: AlertCircle,
         }
@@ -208,133 +192,62 @@ function VehiclesRoute() {
 
   return (
     <div className="w-full pb-12">
-      <div className="bg-slate-50/50 border border-slate-200/80 rounded-2xl p-4 sm:p-6 shadow-xs space-y-6 w-full">
-        {/* Top Header Card */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-6 rounded-xl border border-slate-100 shadow-xs">
-          <div>
-            <div className="flex items-center gap-2.5">
-              <div className="p-2 bg-indigo-50 border border-indigo-100 rounded-xl text-indigo-600 shadow-2xs">
-                <Truck className="w-5 h-5" />
-              </div>
-              <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+      {/* Outer Container with Thicker Theme-Adaptive Border */}
+      <div className="bg-slate-50/60 dark:bg-slate-900/40 border-2 border-primary/20 dark:border-primary/30 rounded-2xl p-4 sm:p-6 shadow-2xs space-y-6 w-full backdrop-blur-sm transition-colors">
+        {/* Unified Liquify Gradient Header Card */}
+        <div className="bg-gradient-to-r from-primary via-primary/90 to-primary/80 p-6 rounded-xl border border-white/10 shadow-md backdrop-blur-md text-on-primary">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight h1 drop-shadow-2xs">
                 Vehicle Management
               </h1>
-            </div>
-            <p className="text-sm text-slate-500 mt-0.5 pl-9">
-              {/* Seamlessly monitor fleet health, registration records, and active vehicle assignments. */}
-            </p>
-          </div>
-
-          {can('vehicles', 'write') && (
-            <Button
-              variant="primary"
-              size="md"
-              icon={<Plus className="w-4 h-4" />}
-              onClick={handleOpenCreate}
-            >
-              Add New Vehicle
-            </Button>
-          )}
-        </div>
-
-        {/* Quick Summary Metrics Bar */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {[
-            {
-              label: 'Total Fleet',
-              count: stats.total,
-              filter: 'ALL',
-              color: 'text-slate-900 bg-white border-slate-200',
-            },
-            {
-              label: 'Available',
-              count: stats.available,
-              filter: 'Available',
-              color: 'text-emerald-700 bg-emerald-50/50 border-emerald-100',
-            },
-            {
-              label: 'In Use',
-              count: stats.inUse,
-              filter: 'In Use',
-              color: 'text-blue-700 bg-blue-50/50 border-blue-100',
-            },
-            {
-              label: 'Maintenance',
-              count: stats.maintenance,
-              filter: 'Maintenance',
-              color: 'text-amber-700 bg-amber-50/50 border-amber-100',
-            },
-          ].map((item, idx) => (
-            <button
-              key={idx}
-              onClick={() => setStatusFilter(item.filter)}
-              className={`p-4 rounded-xl border text-left transition-all shadow-2xs hover:shadow-xs cursor-pointer ${
-                statusFilter === item.filter
-                  ? 'ring-2 ring-indigo-600/25 border-indigo-500 bg-white'
-                  : item.color
-              }`}
-            >
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                {item.label}
+              <p className="text-sm opacity-75 mt-0.5">
+                Manage fleet vehicles, documentation, and operational statuses.
               </p>
-              <p className="text-2xl font-bold mt-1 tracking-tight">{item.count}</p>
-            </button>
-          ))}
-        </div>
-
-        {/* Filter and Search Bar Section */}
-        <div className="bg-white p-4 rounded-xl border border-slate-100 shadow-xs flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
-          <div className="w-full md:w-96">
-            <SearchBar
-              value={search}
-              onSearch={handleSearch}
-              placeholder="Search by plate number, brand, model..."
-            />
-          </div>
-
-          <div className="flex items-center justify-between md:justify-end gap-3 px-1 text-xs text-slate-500">
-            <div className="flex items-center gap-1.5 font-medium">
-              <SlidersHorizontal className="w-3.5 h-3.5 text-slate-400" />
-              Showing <span className="text-slate-800 font-bold">
-                {filteredVehicles.length}
-              </span> of {vehicles.length} entries
             </div>
-            {statusFilter !== 'ALL' && (
-              <button
-                onClick={() => setStatusFilter('ALL')}
-                className="text-indigo-600 font-semibold hover:underline"
+
+            {can('vehicles', 'write') && (
+              <Button
+                variant="liquid"
+                size="md"
+                icon={<span className="text-lg leading-none">+</span>}
+                onClick={handleOpenCreate}
               >
-                Clear filter
-              </button>
+                Add New Vehicle
+              </Button>
             )}
           </div>
         </div>
 
-        {/* Table Section */}
-        <div className="bg-white rounded-xl border border-slate-100 shadow-xs overflow-hidden w-full">
+        {/* Data Table Card Container with Thicker Theme-Adaptive Border */}
+        <div className="bg-white dark:bg-slate-900/60 rounded-xl border-2 border-primary/20 dark:border-primary/30 shadow-2xs overflow-hidden w-full transition-colors">
           <Table
             columns={columns}
             rows={paginatedVehicles}
             rowKey="id"
-            emptyMessage={
-              <div className="py-12 flex flex-col items-center justify-center text-center">
-                <div className="w-12 h-12 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-400 mb-3 shadow-2xs">
-                  <Car className="w-6 h-6" />
-                </div>
-                <p className="text-slate-800 font-medium">
-                  {dataLoading ? 'Loading vehicles data...' : 'No vehicles found'}
-                </p>
-                <p className="text-xs text-slate-400 mt-1 max-w-xs">
-                  {dataLoading
-                    ? 'Please wait while we fetch the latest records.'
-                    : 'Try adjusting your search query or filter options to find what you are looking for.'}
-                </p>
-              </div>
-            }
+            loading={dataLoading}
+            emptyMessage="No vehicles found matching your criteria."
             minRows={pageSize}
           />
 
-          <div className="p-4 border-t border-slate-100 bg-slate-50/50">
+          {/* Merged Footer: Search Bar, Total Vehicles & Pagination in a Row */}
+          <div className="p-4 border-t-2 border-primary/20 dark:border-primary/30 bg-slate-50/50 dark:bg-slate-900/40 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-4 w-full sm:w-auto">
+              <div className="w-full sm:w-72">
+                <SearchBar
+                  value={search}
+                  onSearch={handleSearch}
+                  placeholder="Search by plate, brand, model..."
+                />
+              </div>
+              <div className="text-xs font-medium text-slate-500 dark:text-slate-400 whitespace-nowrap hidden sm:block">
+                Total Vehicles:{' '}
+                <span className="font-semibold text-slate-700 dark:text-slate-200">
+                  {filteredVehicles.length}
+                </span>
+              </div>
+            </div>
+
             <Pagination
               page={page}
               totalItems={filteredVehicles.length}
@@ -345,11 +258,10 @@ function VehiclesRoute() {
         </div>
       </div>
 
-      {/* Create / Edit Modal */}
       <Modal
         open={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        title={selectedVehicle ? 'Edit Vehicle Record' : 'Register New Vfast and furious diedehicle'}
+        title={selectedVehicle ? 'Edit Vehicle' : 'Add New Vehicle'}
         size="lg"
       >
         {selectedVehicle ? (

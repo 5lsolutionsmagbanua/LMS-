@@ -40,10 +40,12 @@ export default function PermissionRow({
 
   if (mode === 'catalog') {
     return (
-      <div className="flex items-center justify-between gap-3 border-b border-slate-100 px-5 py-3.5 last:border-0">
+      <div className="flex items-center justify-between gap-3 border-b border-slate-100 dark:border-white/10 px-5 py-3.5 last:border-0">
         <div className="flex min-w-0 items-center gap-3">
           {badge}
-          <span className="truncate text-sm font-medium text-slate-700">{description}</span>
+          <span className="truncate text-sm font-medium text-slate-700 dark:text-slate-300">
+            {description}
+          </span>
         </div>
 
         <button
@@ -51,10 +53,10 @@ export default function PermissionRow({
           onClick={handleCopy}
           aria-label={`Copy permission code ${code}`}
           title={copied ? 'Copied' : code}
-          className="shrink-0 rounded-md p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary/40"
+          className="shrink-0 rounded-md p-1 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors hover:bg-slate-100 dark:hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-[var(--theme-primary)]/40 cursor-pointer"
         >
           {copied ? (
-            <CheckIcon className="h-4 w-4 text-primary" />
+            <CheckIcon className="h-4 w-4 text-[var(--theme-primary)]" />
           ) : (
             <CopyIcon className="h-4 w-4" />
           )}
@@ -69,22 +71,42 @@ export default function PermissionRow({
       role="checkbox"
       aria-checked={checked}
       onClick={onToggle}
-      className={`flex w-full items-center justify-between gap-3 border-b border-slate-100 px-4 py-3 text-left transition-colors last:border-0 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary/40 ${
-        checked ? 'bg-primary/5' : 'bg-white hover:bg-slate-50'
+      style={
+        checked
+          ? {
+              backgroundColor: 'color-mix(in srgb, var(--theme-primary) 8%, transparent)',
+            }
+          : undefined
+      }
+      className={`flex w-full items-center justify-between gap-3 border-b border-slate-100 dark:border-white/10 px-4 py-3 text-left transition-colors last:border-0 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[var(--theme-primary)]/40 cursor-pointer ${
+        checked ? '' : 'bg-white dark:bg-slate-900/40 hover:bg-slate-50 dark:hover:bg-slate-800/50'
       }`}
     >
       <span className="flex min-w-0 items-center gap-3">
         {badge}
-        <span className="truncate text-sm font-medium text-slate-700">{description}</span>
+        <span className="truncate text-sm font-medium text-slate-700 dark:text-slate-300">
+          {description}
+        </span>
       </span>
 
       <span
         aria-hidden="true"
+        style={
+          checked
+            ? {
+                backgroundColor: 'var(--theme-primary)',
+                borderColor: 'var(--theme-primary)',
+                color: 'var(--theme-on-primary)',
+              }
+            : undefined
+        }
         className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border transition-colors ${
-          checked ? 'border-primary bg-primary' : 'border-slate-300 bg-white'
+          checked ? '' : 'border-slate-300 dark:border-white/20 bg-white dark:bg-slate-800'
         }`}
       >
-        {checked && <CheckIcon className="h-3.5 w-3.5 text-white" />}
+        {checked && (
+          <CheckIcon className="h-3.5 w-3.5" style={{ color: 'var(--theme-on-primary)' }} />
+        )}
       </span>
     </button>
   )

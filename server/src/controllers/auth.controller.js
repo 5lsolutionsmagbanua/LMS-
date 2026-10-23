@@ -1,8 +1,10 @@
-const { SQLQueryBuilder } = require('../database/utilities/queries.util.js')
-const { Query } = require('../database/utilities/queries.util.js')
+const jwt = require('jsonwebtoken')
+const { SQLQueryBuilder, Query } = require('../database/utilities/queries.util.js')
 const { Master } = require('../database/models/Master')
 const { EncryptString } = require('../utilities/cryptography.util')
 const { SESSION_COOKIE_NAME, COOKIE_BASE } = require('../utilities/session.constants')
+const { markOnline, markOffline } = require('../services/live-location.service')
+
 const SQL = new SQLQueryBuilder()
 
 // One query, used by both login and me, so they always return the same shape.
@@ -44,6 +46,14 @@ const login = async (req, res) => {
   const { username, password } = req.body
 
   if (!username || !password) {
+    console.table([
+      {
+        Action: 'LOGIN_ATTEMPT',
+        Username: username || 'N/A',
+        Status: 'FAILED',
+        Reason: 'Missing credentials',
+      },
+    ])
     return res.status(400).json({
       status: false,
       message: 'Username and password are required.',
@@ -60,6 +70,14 @@ const login = async (req, res) => {
     const [result] = await Query(sql, bindings)
 
     if (!result) {
+      console.table([
+        {
+          Action: 'LOGIN_ATTEMPT',
+          Username: username,
+          Status: 'FAILED',
+          Reason: 'Invalid credentials or inactive user',
+        },
+      ])
       return res.status(401).json({ message: 'Invalid username or password.' })
     }
 
@@ -67,6 +85,14 @@ const login = async (req, res) => {
     req.session.regenerate((regenErr) => {
       if (regenErr) {
         console.error('Session regenerate error:', regenErr)
+        console.table([
+          {
+            Action: 'SESSION_REGENERATE',
+            Username: username,
+            Status: 'ERROR',
+            Details: regenErr.message,
+          },
+        ])
         return res.status(500).json({ status: false, message: 'Error creating session' })
       }
 
@@ -83,31 +109,64 @@ const login = async (req, res) => {
       req.session.save((saveErr) => {
         if (saveErr) {
           console.error('Session save error:', saveErr)
+          console.table([
+            {
+              Action: 'SESSION_SAVE',
+              Username: username,
+              Status: 'ERROR',
+              Details: saveErr.message,
+            },
+          ])
           return res.status(500).json({ status: false, message: 'Error saving session' })
         }
+
+        // Session is stored: the user is now online for live-location presence.
+        markOnline(String(result.userId))
+
+        console.table([
+          {
+            Action: 'LOGIN_SUCCESS',
+            UserId: result.userId,
+            Username: result.userName,
+            Role: result.roleName,
+            Branch: result.branchName,
+          },
+        ])
+
         return res.json(result)
       })
     })
   } catch (error) {
     console.error(error)
+    console.table([
+      { Action: 'LOGIN_EXCEPTION', Username: username, Status: 'ERROR', Details: error.message },
+    ])
     return res.status(500).json({ status: false, message: 'Error Logging In' })
   }
 }
 
 /**
  * @name Logout
- * @description Delete the session from MongoDB and clear the cookie.
+ * @description Marks the user offline, destroys the session, and clears the cookie.
  */
 const Logout = (req, res) => {
   // #swagger.tags = ['Auth']
   // #swagger.description = 'Logout user'
 
+  // Read the id before the session is destroyed, so presence can be cleared.
+  const signedOutUserId = req.session?.userId
+  if (signedOutUserId) markOffline(String(signedOutUserId))
+
+  const userId = signedOutUserId || 'Unknown'
+
   req.session.destroy((err) => {
     if (err) {
       console.error('Cannot destroy session', err)
+      console.table([{ Action: 'LOGOUT', UserId: userId, Status: 'FAILED', Details: err.message }])
       return res.status(500).json({ message: 'Logout failed' })
     }
 
+    console.table([{ Action: 'LOGOUT_SUCCESS', UserId: userId, Status: 'SUCCESS' }])
     res.clearCookie(SESSION_COOKIE_NAME, COOKIE_BASE)
     return res.sendStatus(204)
   })
@@ -124,6 +183,9 @@ const me = async (req, res) => {
 
   const userId = req.session?.userId
   if (!userId) {
+    console.table([
+      { Action: 'ME_CHECK', Status: 'UNAUTHORIZED', Reason: 'No session userId found' },
+    ])
     return res.status(401).json({ message: 'Not logged in' })
   }
 
@@ -136,22 +198,72 @@ const me = async (req, res) => {
     const [result] = await Query(sql, bindings)
 
     if (!result) {
-      // Deactivated or deleted since login: end the session and drop the cookie.
+      // Deactivated or deleted since login: end the session, clear presence, drop the cookie.
+      markOffline(String(userId))
+      console.table([
+        {
+          Action: 'ME_CHECK',
+          UserId: userId,
+          Status: 'DEACTIVATED_OR_DELETED',
+          Reason: 'User no longer active or exists',
+        },
+      ])
       return req.session.destroy(() => {
         res.clearCookie(SESSION_COOKIE_NAME, COOKIE_BASE)
         res.status(401).json({ message: 'Not logged in' })
       })
     }
 
+    console.table([
+      {
+        Action: 'ME_FETCH_SUCCESS',
+        UserId: result.userId,
+        Username: result.userName,
+        Role: result.roleName,
+      },
+    ])
     return res.json(result)
   } catch (error) {
     console.error(error)
+    console.table([
+      { Action: 'ME_EXCEPTION', UserId: userId, Status: 'ERROR', Details: error.message },
+    ])
     return res.status(500).json({ message: 'Could not load your account' })
   }
+}
+
+/**
+ * @name getWsToken
+ * @description Short-lived JWT used only for the WebSocket handshake.
+ *              Auth stays session-based; this just bridges it to the WS server.
+ */
+const getWsToken = (req, res) => {
+  // #swagger.tags = ['Auth']
+  // #swagger.description = 'Short-lived token for the WebSocket handshake'
+  const userId = req.session?.userId
+  if (!userId) return res.status(401).json({ message: 'Not logged in' })
+
+  if (!process.env.JWT_SECRET) {
+    console.error('getWsToken: JWT_SECRET is not set')
+    return res.status(500).json({ message: 'Realtime is not configured' })
+  }
+
+  const token = jwt.sign(
+    {
+      userId,
+      role: req.session.roleName,
+      branchId: req.session.branchId,
+    },
+    process.env.JWT_SECRET,
+    { algorithm: 'HS256', expiresIn: '60s' },
+  )
+
+  return res.json({ token })
 }
 
 module.exports = {
   login,
   Logout,
   me,
+  getWsToken,
 }
